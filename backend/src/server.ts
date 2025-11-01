@@ -28,7 +28,6 @@ const corsOptions = {
       'http://localhost:3000',
       'http://localhost:8080',
       'https://v-e-t.vercel.app',
-      'https://v-e-t.onrender.com',
       process.env.FRONTEND_URL,
     ].filter(Boolean) as string[];
     

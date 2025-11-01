@@ -29,7 +29,7 @@ Your V.E.T app is now fully set up to store user and dog data in MongoDB!
 
 ## Next Steps: Configure Your Connection
 
-You've already created your collections on Render! Now you just need to connect your backend to them.
+You've already created your collections in MongoDB! Now you just need to connect your backend to them.
 
 ### Option 1: MongoDB Atlas (Cloud - Recommended)
 
@@ -200,7 +200,7 @@ Your backend provides these endpoints:
 1. ✅ **Test all features** (signup, login, add dog)
 2. ✅ **Check MongoDB** to see your data
 3. 🔄 **Add more features** (update vitals, delete dogs)
-4. 🚀 **Deploy backend** to Railway/Render/Heroku
+4. 🚀 **Deploy backend** to Railway/Heroku/Vercel or other hosting service
 5. 🔐 **Enhance security** (input validation, rate limiting)
 
 ## Documentation

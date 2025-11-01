@@ -1,6 +1,6 @@
 # MongoDB Collections Reference
 
-Your V.E.T app uses two MongoDB collections that you created on Render.
+Your V.E.T app uses two MongoDB collections in your MongoDB database.
 
 ## 📊 Collection Structure
 
@@ -115,7 +115,7 @@ Dogs.findOne({ ownerId: userId, name: "Buddy" })
 
 ---
 
-## ✅ What You Need on Render
+## ✅ What You Need
 
 ✅ **Collections Created:**
 - `Users` - For user accounts
@@ -155,5 +155,5 @@ After deploying your backend:
 
 ## 🚀 Ready to Use!
 
-Your collections are properly configured. Just make sure your backend `.env` has the correct MongoDB connection string from Render, and you're all set!
+Your collections are properly configured. Just make sure your backend `.env` has the correct MongoDB connection string, and you're all set!
 

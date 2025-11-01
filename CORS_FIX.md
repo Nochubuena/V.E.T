@@ -10,9 +10,10 @@ You're seeing a CORS error because:
 ### Step 1: Deploy Your Backend
 
 You need to deploy your backend to a hosting service first. Options:
-- **Render** (Free tier available): https://render.com
 - **Railway**: https://railway.app
 - **Heroku**: https://heroku.com
+- **Vercel**: https://vercel.com (for serverless)
+- **AWS/Google Cloud/Azure**: Cloud platform services
 
 ### Step 2: Update Frontend API URL
 
@@ -36,7 +37,7 @@ Edit `src/services/api.ts` and replace line 27:
 return 'https://your-actual-backend-url.com/api';
 ```
 
-Replace `your-actual-backend-url.com` with your deployed backend URL (e.g., `vet-backend.onrender.com`)
+Replace `your-actual-backend-url.com` with your deployed backend URL
 
 ### Step 3: Update Backend CORS
 
@@ -88,7 +89,7 @@ After updating, check your browser console. You should see:
 - Verify the URL in browser matches your backend URL
 
 ### Network Error
-- Backend might be down or sleeping (Render free tier)
+- Backend might be down or sleeping (free tier services may sleep after inactivity)
 - Check backend logs in hosting dashboard
 - Verify environment variables are set correctly
 

@@ -779,7 +779,7 @@ REACT_APP_API_URL=http://localhost:3000/api
 1. ✅ Test all CRUD operations
 2. ✅ Add error handling in frontend
 3. ✅ Add loading states
-4. ✅ Deploy backend to a hosting service (Heroku, Railway, Render, etc.)
+4. ✅ Deploy backend to a hosting service (Heroku, Railway, Vercel, etc.)
 5. ✅ Update frontend API URL for production
 6. ✅ Add input validation
 7. ✅ Add password strength requirements
@@ -795,11 +795,7 @@ REACT_APP_API_URL=http://localhost:3000/api
 - Add environment variables
 - Deploy!
 
-### Option 2: Render
-- Similar process to Railway
-- Free tier available
-
-### Option 3: Heroku
+### Option 2: Heroku
 - Requires credit card for free tier
 - Push to GitHub and connect
 

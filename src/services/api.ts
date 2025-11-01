@@ -3,7 +3,7 @@ import axios from 'axios';
 // Get API URL from environment variable or use defaults
 // Set REACT_APP_API_URL in your .env file or Vercel environment variables
 // For local development: http://localhost:3000/api
-// For production: Your deployed backend URL (e.g., https://your-backend.onrender.com/api)
+// For production: Your deployed backend URL
 const getApiBaseUrl = (): string => {
   // Check for environment variable first (for Vercel/production)
   if (typeof window !== 'undefined' && (window as any).__ENV__?.REACT_APP_API_URL) {
@@ -21,8 +21,9 @@ const getApiBaseUrl = (): string => {
     
     // Production domain
     if (hostname.includes('vercel.app') || hostname.includes('v-e-t')) {
-      // Backend deployed on Render
-      return 'https://v-e-t.onrender.com/api';
+      // Set your production backend URL via REACT_APP_API_URL environment variable
+      // Or update this line with your actual backend URL
+      return process.env.REACT_APP_API_URL || 'https://your-backend-domain.com/api';
     }
     
     // Local development
@@ -36,8 +37,8 @@ const getApiBaseUrl = (): string => {
     return 'http://localhost:3000/api';
   }
   
-  // Final fallback - production backend on Render
-  return 'https://v-e-t.onrender.com/api';
+  // Final fallback - set via REACT_APP_API_URL environment variable
+  return process.env.REACT_APP_API_URL || 'https://your-backend-domain.com/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
