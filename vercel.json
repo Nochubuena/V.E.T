@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "npx expo export:web && node fix-manifest.js",
   "outputDirectory": "web-build",
   "routes": [
     { "src": "/(.*)", "dest": "/index.html" }

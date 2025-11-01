@@ -3,6 +3,9 @@
     "name": "V.E.T",
     "slug": "vet-app",
     "version": "1.0.0",
-    "platforms": ["web", "ios", "android"]
+    "platforms": ["web", "ios", "android"],
+    "web": {
+      "bundler": "webpack"
+    }
   }
 }

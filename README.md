@@ -86,6 +86,35 @@ Or run directly:
 - **Profile → Sign In**: Log out or switch account
 - **Tab Navigation**: Navigate between Home, History, and Profile via bottom tabs
 
+## Deployment
+
+### Deploy to Vercel
+
+This app is configured to deploy on Vercel automatically:
+
+1. **Push your code to GitHub:**
+   ```bash
+   git add .
+   git commit -m "Ready for Vercel deployment"
+   git push
+   ```
+
+2. **Connect to Vercel:**
+   - Go to [vercel.com](https://vercel.com)
+   - Import your GitHub repository
+   - Vercel will automatically detect the configuration from `vercel.json`
+
+3. **Configuration:**
+   - **Build Command**: `npx expo export:web && node fix-manifest.js`
+   - **Output Directory**: `web-build`
+   - **Framework**: Other (Static Site)
+   
+4. **Deploy:**
+   - Click "Deploy" and wait for the build to complete
+   - Your app will be live at `https://your-project.vercel.app`
+
+The `vercel.json` file is already configured with the correct build settings and routing for single-page app support.
+
 ## Development Notes
 
 - The app uses emoji icons for simplicity. You can replace with `react-native-vector-icons` for production.
