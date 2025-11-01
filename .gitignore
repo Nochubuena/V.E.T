@@ -80,6 +80,11 @@ yarn-error.log
 .vscode/
 *.log
 
+# Expo
+.expo/
+web-build/
+dist/
+
 
 
 
