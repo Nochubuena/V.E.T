@@ -6,23 +6,61 @@ import {
   SafeAreaView,
   TouchableOpacity,
   ScrollView,
+  Image,
+  Alert,
 } from 'react-native';
+import {useApp} from '../context/AppContext';
 
 const ProfilePage = ({navigation}: any) => {
+  const {owner, dogs, logout} = useApp();
+
   const handleLogOut = () => {
-    // Navigate back to sign in
-    navigation.reset({
-      index: 0,
-      routes: [{name: 'SignIn'}],
-    });
+    Alert.alert(
+      'Log Out',
+      'Are you sure you want to log out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Log Out',
+          style: 'destructive',
+          onPress: () => {
+            logout();
+            navigation.reset({
+              index: 0,
+              routes: [{name: 'Login'}],
+            });
+            Alert.alert('Success', 'You have been logged out successfully');
+          },
+        },
+      ]
+    );
   };
 
   const handleSwitchAccount = () => {
-    // Navigate back to sign in
-    navigation.reset({
-      index: 0,
-      routes: [{name: 'SignIn'}],
-    });
+    Alert.alert(
+      'Switch Account',
+      'Are you sure you want to switch accounts? You will be logged out.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Switch',
+          onPress: () => {
+            logout();
+            navigation.reset({
+              index: 0,
+              routes: [{name: 'Login'}],
+            });
+            Alert.alert('Success', 'Switched account successfully');
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -40,11 +78,32 @@ const ProfilePage = ({navigation}: any) => {
         {/* Profile Information */}
         <View style={styles.profileSection}>
           <View style={styles.profileImage}>
-            <Text style={styles.dogEmoji}>🐕</Text>
+            <Text style={styles.profileIcon}>👤</Text>
           </View>
-          <Text style={styles.dogName}>Dog Name 1</Text>
-          <Text style={styles.accountInfo}>gmail used</Text>
+          <Text style={styles.dogName}>{owner?.name || 'Owner'}</Text>
+          <Text style={styles.accountInfo}>{owner?.email || 'No email'}</Text>
         </View>
+
+        {/* Dogs Section */}
+        {dogs.length > 0 && (
+          <View style={styles.dogsSection}>
+            <Text style={styles.dogsSectionTitle}>Your Dogs ({dogs.length})</Text>
+            <View style={styles.dogsList}>
+              {dogs.map(dog => (
+                <View key={dog.id} style={styles.dogItem}>
+                  <View style={styles.dogItemImageContainer}>
+                    {dog.imageUri ? (
+                      <Image source={{uri: dog.imageUri}} style={styles.dogItemImage} />
+                    ) : (
+                      <Text style={styles.dogItemEmoji}>🐕</Text>
+                    )}
+                  </View>
+                  <Text style={styles.dogItemName}>{dog.name}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Action Items */}
         <View style={styles.actionsSection}>
@@ -126,6 +185,9 @@ const styles = StyleSheet.create({
   dogEmoji: {
     fontSize: 60,
   },
+  profileIcon: {
+    fontSize: 60,
+  },
   dogName: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -175,9 +237,54 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#000000',
   },
+  dogsSection: {
+    marginBottom: 32,
+  },
+  dogsSectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 16,
+  },
+  dogsList: {
+    gap: 12,
+  },
+  dogItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  dogItemImageContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    overflow: 'hidden',
+  },
+  dogItemImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  dogItemEmoji: {
+    fontSize: 28,
+  },
+  dogItemName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+  },
 });
 
 export default ProfilePage;
+
 
 
 

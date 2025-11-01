@@ -7,32 +7,22 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import {useApp} from '../context/AppContext';
 
 const HistoryScreen = ({navigation}: any) => {
-  // Sample vital status records
-  const vitalRecords = [
-    {dogName: "Dog name 1", records: [
-      {heartRate: 75, temperature: 38.7, status: 'Normal', time: '7:38 am'},
-      {heartRate: 73, temperature: 35.7, status: 'Normal', time: '7:37 am'},
-      {heartRate: 74, temperature: 36.8, status: 'Normal', time: '7:36 am'},
-      {heartRate: 76, temperature: 34.7, status: 'Normal', time: '7:35 am'},
-      {heartRate: 75, temperature: 36.4, status: 'Normal', time: '7:34 am'},
-    ]},
-    {dogName: "Dog name 2", records: [
-      {heartRate: 75, temperature: 38.7, status: 'Normal', time: '7:38 am'},
-      {heartRate: 73, temperature: 35.7, status: 'Normal', time: '7:37 am'},
-      {heartRate: 74, temperature: 36.8, status: 'Normal', time: '7:36 am'},
-      {heartRate: 76, temperature: 34.7, status: 'Normal', time: '7:35 am'},
-      {heartRate: 75, temperature: 36.4, status: 'Normal', time: '7:34 am'},
-    ]},
-    {dogName: "Dog name 3", records: [
-      {heartRate: 75, temperature: 38.7, status: 'Normal', time: '7:38 am'},
-      {heartRate: 73, temperature: 35.7, status: 'Normal', time: '7:37 am'},
-    ]},
-  ];
+  const {dogs} = useApp();
 
-  const navigateToVitals = (dogName: string) => {
-    navigation.navigate('ProfilePageVitals');
+  // Transform dogs data into vital records format
+  const vitalRecords = dogs
+    .filter(dog => dog.vitalRecords && dog.vitalRecords.length > 0)
+    .map(dog => ({
+      dogId: dog.id,
+      dogName: dog.name,
+      records: dog.vitalRecords || [],
+    }));
+
+  const navigateToVitals = (dogId: string) => {
+    navigation.navigate('ProfilePageVitals', {dogId});
   };
 
   return (
@@ -47,16 +37,22 @@ const HistoryScreen = ({navigation}: any) => {
 
       {/* Content Area */}
       <ScrollView style={styles.content}>
-        {vitalRecords.map((dog, index) => (
-          <View key={index} style={styles.dogSection}>
-            {/* Section Title */}
-            <TouchableOpacity 
-              style={styles.sectionHeader}
-              onPress={() => navigateToVitals(dog.dogName)}
-            >
-              <Text style={styles.sectionTitle}>{dog.dogName}'s Vital Status</Text>
-              <Text style={styles.sectionArrow}>›</Text>
-            </TouchableOpacity>
+        {vitalRecords.length === 0 ? (
+          <View style={styles.noRecordsContainer}>
+            <Text style={styles.noRecordsText}>No vital records yet.</Text>
+            <Text style={styles.noRecordsSubText}>Add your dogs and start tracking their health!</Text>
+          </View>
+        ) : (
+          vitalRecords.map((dog, index) => (
+            <View key={dog.dogId || index} style={styles.dogSection}>
+              {/* Section Title */}
+              <TouchableOpacity 
+                style={styles.sectionHeader}
+                onPress={() => navigateToVitals(dog.dogId)}
+              >
+                <Text style={styles.sectionTitle}>{dog.dogName}'s Vital Status</Text>
+                <Text style={styles.sectionArrow}>›</Text>
+              </TouchableOpacity>
 
             {/* Records List */}
             {dog.records.map((record, recordIndex) => (
@@ -76,7 +72,8 @@ const HistoryScreen = ({navigation}: any) => {
               </View>
             ))}
           </View>
-        ))}
+          ))
+        )}
       </ScrollView>
 
       {/* Bottom Navigation Bar (handled by Tab Navigator in App.tsx) */}
@@ -158,9 +155,27 @@ const styles = StyleSheet.create({
   time: {
     color: '#000000',
   },
+  noRecordsContainer: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  noRecordsText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  noRecordsSubText: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+  },
 });
 
 export default HistoryScreen;
+
 
 
 

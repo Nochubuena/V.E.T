@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -8,28 +8,30 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
+import {useApp, Dog} from '../context/AppContext';
 
 const HomePage = ({navigation}: any) => {
-  const [selectedDog] = useState('Dog name');
+  const {owner, dogs} = useApp();
+  const [selectedDog, setSelectedDog] = useState<Dog | null>(null);
 
-  // Sample dog data - in production this would come fromdasad a state management system
-  const dogs = [
-    {id: 1, name: 'Dog name 1'},
-    {id: 2, name: 'Dog name 2'},
-    {id: 3, name: 'Dog name 3'},
-    {id: 4, name: 'Dog name 4'},
-    {id: 4, name: 'Dog name 5'},
-    {id: 4, name: 'Dog name 6'},
-    {id: 4, name: 'Dog name 7'},
-    {id: 4, name: 'Dog name 8'},
-  ];
+  useEffect(() => {
+    if (dogs.length > 0 && !selectedDog) {
+      setSelectedDog(dogs[0]);
+    }
+  }, [dogs]);
 
   const navigateToVitals = () => {
-    navigation.navigate('ProfilePageVitals');
+    if (selectedDog) {
+      navigation.navigate('ProfilePageVitals', {dogId: selectedDog.id});
+    }
   };
 
-    const navigateTohistory = () => {
+  const navigateTohistory = () => {
     navigation.navigate('HistoryScreen');
+  };
+
+  const navigateToSignUpDog = () => {
+    navigation.navigate('SignUpDog');
   };
 
   return (
@@ -45,62 +47,101 @@ const HomePage = ({navigation}: any) => {
             </View>
           </View>
 
-          {/* Dog Profile Pictures */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dogList}>
-            {dogs.map(dog => (
-              <TouchableOpacity key={dog.id} style={styles.dogProfile}>
-                <View style={styles.profileImage}>
-                  <Text style={styles.dogEmoji}>🐕</Text>
-                </View>
-                <Text style={styles.dogName}>{dog.name}</Text>
+          {dogs.length === 0 ? (
+            <View style={styles.noDogsContainer}>
+              <Text style={styles.noDogsText}>You don't have any dogs registered yet.</Text>
+              <TouchableOpacity style={styles.signUpDogButton} onPress={navigateToSignUpDog}>
+                <Text style={styles.signUpDogButtonText}>Sign up your dog now</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+            </View>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dogList}>
+              {dogs.map(dog => (
+                <TouchableOpacity 
+                  key={dog.id} 
+                  style={[styles.dogProfile, selectedDog?.id === dog.id && styles.selectedDogProfile]}
+                  onPress={() => setSelectedDog(dog)}
+                >
+                  <View style={styles.profileImage}>
+                    {dog.imageUri ? (
+                      <Image source={{uri: dog.imageUri}} style={styles.dogProfileImage} />
+                    ) : (
+                      <Text style={styles.dogEmoji}>🐕</Text>
+                    )}
+                  </View>
+                  <Text style={styles.dogName}>{dog.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
         </View>
 
         {/* Divider */}
         <View style={styles.divider} />
 
         {/* Vital Status Section */}
-        <TouchableOpacity style={styles.vitalsSection} onPress={navigateToVitals}>
-          <Text style={styles.vitalTitle}>{selectedDog}'s Vital Status</Text>
+        {selectedDog && (
+          <TouchableOpacity style={styles.vitalsSection} onPress={navigateToVitals}>
+            <Text style={styles.vitalTitle}>{selectedDog.name}'s Vital Status</Text>
 
-          <View style={styles.vitalsContainer}>
-            {/* Heart Rate */}
-            <View style={styles.vitalBox}>
-              <Text style={styles.vitalNumber}>73</Text>
-              <Text style={styles.vitalLabel}>Beats per minute</Text>
-              <Text style={styles.vitalSubLabel}>Heartbeats</Text>
+            <View style={styles.vitalsContainer}>
+              {/* Heart Rate */}
+              <View style={styles.vitalBox}>
+                <Text style={styles.vitalNumber}>{selectedDog.heartRate || 73}</Text>
+                <Text style={styles.vitalLabel}>Beats per minute</Text>
+                <Text style={styles.vitalSubLabel}>Heartbeats</Text>
+              </View>
+
+              {/* Divider */}
+              <View style={styles.vitalDivider} />
+
+              {/* Temperature */}
+              <View style={styles.vitalBox}>
+                <Text style={styles.vitalNumber}>{selectedDog.temperature || 38.4}</Text>
+                <Text style={styles.vitalLabel}>Celsius</Text>
+                <Text style={styles.vitalSubLabel}>Body Temperature</Text>
+              </View>
             </View>
-
-            {/* Divider */}
-            <View style={styles.vitalDivider} />
-
-            {/* Temperature */}
-            <View style={styles.vitalBox}>
-              <Text style={styles.vitalNumber}>38.4</Text>
-              <Text style={styles.vitalLabel}>Celsius</Text>
-              <Text style={styles.vitalSubLabel}>Body Temperature</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        )}
 
         {/* Divider */}
         <View style={styles.divider} />
 
         {/* Health Cards Section */}
         <View style={styles.cardsSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <Text style={styles.cardsSectionTitle}>Health Information</Text>
+          <View style={styles.cardsContainer}>
             <TouchableOpacity style={styles.healthCard} onPress={navigateTohistory}>
-              <Text style={styles.cardText}>Temperature History</Text>
+              <View style={styles.cardIconContainer}>
+                <Text style={styles.cardIcon}>📊</Text>
+              </View>
+              <View style={styles.cardContent}>
+                <Text style={styles.cardText}>Temperature History</Text>
+                <Text style={styles.cardSubText}>View temperature records</Text>
+              </View>
             </TouchableOpacity>
             <TouchableOpacity style={styles.healthCard}>
-              <Text style={styles.cardText}>Dogs name's Health</Text>
+              <View style={styles.cardIconContainer}>
+                <Text style={styles.cardIcon}>💚</Text>
+              </View>
+              <View style={styles.cardContent}>
+                <Text style={styles.cardText}>
+                  {selectedDog ? `${selectedDog.name}'s Health` : "Dog's Health"}
+                </Text>
+                <Text style={styles.cardSubText}>Overall health status</Text>
+              </View>
             </TouchableOpacity>
             <TouchableOpacity style={styles.healthCard}>
-              <Text style={styles.cardText}>Heart Rate History</Text>
+              <View style={styles.cardIconContainer}>
+                <Text style={styles.cardIcon}>💓</Text>
+              </View>
+              <View style={styles.cardContent}>
+                <Text style={styles.cardText}>Heart Rate History</Text>
+                <Text style={styles.cardSubText}>Monitor heart rate trends</Text>
+              </View>
             </TouchableOpacity>
-          </ScrollView>
+          </View>
         </View>
       </ScrollView>
 
@@ -162,6 +203,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#E0E0E0',
+    overflow: 'hidden',
+  },
+  dogProfileImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
   },
   dogEmoji: {
     fontSize: 40,
@@ -221,20 +268,81 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     marginBottom: 100,
   },
+  cardsSectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 16,
+  },
+  cardsContainer: {
+    gap: 12,
+  },
   healthCard: {
-    width: 200,
-    height: 120,
-    backgroundColor: '#D8B3FF',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    marginRight: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  cardIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 16,
+  },
+  cardIcon: {
+    fontSize: 28,
+  },
+  cardContent: {
+    flex: 1,
   },
   cardText: {
     fontSize: 16,
     color: '#000000',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  cardSubText: {
+    fontSize: 13,
+    color: '#666666',
+  },
+  noDogsContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  noDogsText: {
+    fontSize: 16,
+    color: '#666666',
+    marginBottom: 20,
     textAlign: 'center',
-    fontWeight: '500',
+  },
+  signUpDogButton: {
+    backgroundColor: '#000000',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+  },
+  signUpDogButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  selectedDogProfile: {
+    opacity: 1,
   },
 });
 

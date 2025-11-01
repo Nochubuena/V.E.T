@@ -3,7 +3,10 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {Text} from 'react-native';
-import SignInScreen from './src/screens/SignInScreen';
+import {AppProvider} from './src/context/AppContext';
+import LoginScreen from './src/screens/LoginScreen';
+import SignUpOwnerScreen from './src/screens/SignUpOwnerScreen';
+import SignUpDogScreen from './src/screens/SignUpDogScreen';
 import HomePage from './src/screens/HomePage';
 import HistoryScreen from './src/screens/HistoryScreen';
 import ProfilePage from './src/screens/ProfilePage';
@@ -67,14 +70,18 @@ function TabBarIcon({icon, color, size}: {icon: string; color: string; size: num
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Main" screenOptions={{headerShown: false}}>
-        <Stack.Screen name="SignIn" component={SignInScreen} />
-        <Stack.Screen name="Main" component={TabNavigator} />
-        <Stack.Screen name="ProfilePageVitals" component={ProfilePageVitals} />
-        <Stack.Screen name="HistoryScreen" component={HistoryScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <AppProvider>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Login" screenOptions={{headerShown: false}}>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="SignUpOwner" component={SignUpOwnerScreen} />
+          <Stack.Screen name="Main" component={TabNavigator} />
+          <Stack.Screen name="SignUpDog" component={SignUpDogScreen} />
+          <Stack.Screen name="ProfilePageVitals" component={ProfilePageVitals} />
+          <Stack.Screen name="HistoryScreen" component={HistoryScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </AppProvider>
   );
 }
 

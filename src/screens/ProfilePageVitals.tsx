@@ -7,26 +7,40 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  Image,
 } from 'react-native';
 import Svg, {Path, Circle} from 'react-native-svg';
+import {useApp} from '../context/AppContext';
 
 const {width} = Dimensions.get('window');
 
-const ProfilePageVitals = ({navigation}: any) => {
-  const dogName = "Dog Name 1";
+const ProfilePageVitals = ({navigation, route}: any) => {
+  const {dogs} = useApp();
+  const dogId = route?.params?.dogId;
+  
+  const dog = dogs.find(d => d.id === dogId) || dogs[0];
+  const dogName = dog?.name || "Dog Name";
 
-  // Sample data for heart rate chart
-  const heartRateData = [72, 73, 74, 73, 75, 73, 74, 76, 73];
-  const maxHeartRate = Math.max(...heartRateData);
+  // Get heart rate data from dog's vital records or use sample data
+  const heartRateData = dog?.vitalRecords 
+    ? dog.vitalRecords.map(r => r.heartRate)
+    : [72, 73, 74, 73, 75, 73, 74, 76, 73];
+  
+  const temperatureData = dog?.vitalRecords
+    ? dog.vitalRecords.map(r => r.temperature)
+    : [38.0, 38.2, 38.4, 38.3, 38.5, 38.3, 38.4, 38.6, 38.3];
+
+  const maxHeartRate = heartRateData.length > 0 ? Math.max(...heartRateData) : 80;
+  const maxTemperature = temperatureData.length > 0 ? Math.max(...temperatureData) : 40;
   const chartWidth = width - 80;
   const chartHeight = 150;
 
-  const getChartPath = (data: number[]) => {
-    if (data.length === 0) return '';
+  const getChartPath = (data: number[], maxValue: number) => {
+    if (data.length === 0 || maxValue === 0) return '';
     const stepX = chartWidth / (data.length - 1);
     const points = data.map((value, index) => {
       const x = index * stepX;
-      const y = chartHeight - ((value / maxHeartRate) * chartHeight);
+      const y = chartHeight - ((value / maxValue) * chartHeight);
       return `${x},${y}`;
     });
     return `M ${points.join(' L ')}`;
@@ -47,7 +61,11 @@ const ProfilePageVitals = ({navigation}: any) => {
         {/* Profile Section */}
         <View style={styles.profileSection}>
           <View style={styles.profileImage}>
-            <Text style={styles.dogEmoji}>🐕</Text>
+            {dog?.imageUri ? (
+              <Image source={{uri: dog.imageUri}} style={styles.dogProfileImage} />
+            ) : (
+              <Text style={styles.dogEmoji}>🐕</Text>
+            )}
           </View>
           <Text style={styles.dogName}>{dogName}</Text>
         </View>
@@ -62,7 +80,7 @@ const ProfilePageVitals = ({navigation}: any) => {
           <View style={styles.vitalsContainer}>
             {/* Heart Rate */}
             <View style={styles.vitalBox}>
-              <Text style={styles.vitalNumber}>73</Text>
+              <Text style={styles.vitalNumber}>{dog?.heartRate || 73}</Text>
               <Text style={styles.vitalLabel}>Beats per minute</Text>
               <Text style={styles.vitalSubLabel}>Heartbeats</Text>
             </View>
@@ -72,7 +90,7 @@ const ProfilePageVitals = ({navigation}: any) => {
 
             {/* Temperature */}
             <View style={styles.vitalBox}>
-              <Text style={styles.vitalNumber}>38.4</Text>
+              <Text style={styles.vitalNumber}>{dog?.temperature || 38.4}</Text>
               <Text style={styles.vitalLabel}>Celsius</Text>
               <Text style={styles.vitalSubLabel}>Body Temperature</Text>
             </View>
@@ -122,7 +140,7 @@ const ProfilePageVitals = ({navigation}: any) => {
               
               {/* Data line */}
               <Path
-                d={getChartPath(heartRateData)}
+                d={getChartPath(heartRateData, maxHeartRate)}
                 stroke="#007AFF"
                 strokeWidth="2"
                 fill="none"
@@ -186,16 +204,16 @@ const ProfilePageVitals = ({navigation}: any) => {
               
               {/* Data line */}
               <Path
-                d={getChartPath(heartRateData)}
+                d={getChartPath(temperatureData, maxTemperature)}
                 stroke="#34C759"
                 strokeWidth="2"
                 fill="none"
               />
               
               {/* Data points */}
-              {heartRateData.map((value, index) => {
-                const x = (index / (heartRateData.length - 1)) * chartWidth;
-                const y = chartHeight - ((value / maxHeartRate) * chartHeight);
+              {temperatureData.map((value, index) => {
+                const x = (index / (temperatureData.length - 1)) * chartWidth;
+                const y = chartHeight - ((value / maxTemperature) * chartHeight);
                 return (
                   <Circle
                     key={index}
@@ -256,6 +274,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+    overflow: 'hidden',
+  },
+  dogProfileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
   },
   dogEmoji: {
     fontSize: 60,
@@ -331,6 +355,7 @@ const styles = StyleSheet.create({
 });
 
 export default ProfilePageVitals;
+
 
 
 
