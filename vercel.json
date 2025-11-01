@@ -1,8 +1,8 @@
 {
   "buildCommand": "npx expo export:web && node fix-manifest.js",
   "outputDirectory": "web-build",
-  "routes": [
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
 
