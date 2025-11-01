@@ -15,18 +15,34 @@ const SignUpOwnerScreen = ({navigation}: any) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [errors, setErrors] = useState<{email?: string; password?: string; name?: string}>({});
+  const [errors, setErrors] = useState<{email?: string; password?: string; name?: string; general?: string}>({});
   const [touched, setTouched] = useState<{email?: boolean; password?: boolean; name?: boolean}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const {signUpOwner} = useApp();
+  const {signUpOwner, error: apiError} = useApp();
 
   const validateEmail = (email: string): string | undefined => {
     if (!email) {
-      return 'Email is required';
+      return 'Email address is required';
+    }
+    if (!email.includes('@')) {
+      return 'Email must contain @ symbol';
+    }
+    if (email.split('@').length !== 2) {
+      return 'Email can only contain one @ symbol';
+    }
+    const [localPart, domain] = email.split('@');
+    if (!localPart || localPart.length === 0) {
+      return 'Email must have text before @ symbol';
+    }
+    if (!domain || domain.length === 0) {
+      return 'Email must have text after @ symbol';
+    }
+    if (!domain.includes('.')) {
+      return 'Email domain must contain a dot (e.g., .com)';
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return 'Please enter a valid email address';
+      return 'Please enter a valid email address (e.g., user@example.com)';
     }
     return undefined;
   };
@@ -36,10 +52,10 @@ const SignUpOwnerScreen = ({navigation}: any) => {
       return 'Password is required';
     }
     if (password.length < 6) {
-      return 'Password must be at least 6 characters';
+      return `Password must be at least 6 characters (currently ${password.length})`;
     }
     if (password.length > 100) {
-      return 'Password must be less than 100 characters';
+      return 'Password is too long (maximum 100 characters)';
     }
     return undefined;
   };
@@ -89,21 +105,12 @@ const SignUpOwnerScreen = ({navigation}: any) => {
     if (field === 'email') {
       error = validateEmail(email);
       setErrors({...errors, email: error});
-      if (error) {
-        Alert.alert('Validation Error', error);
-      }
     } else if (field === 'password') {
       error = validatePassword(password);
       setErrors({...errors, password: error});
-      if (error) {
-        Alert.alert('Validation Error', error);
-      }
     } else if (field === 'name') {
       error = validateName(name);
       setErrors({...errors, name: error});
-      if (error) {
-        Alert.alert('Validation Error', error);
-      }
     }
   };
 
@@ -120,14 +127,13 @@ const SignUpOwnerScreen = ({navigation}: any) => {
     });
 
     if (emailError || passwordError || nameError) {
-      // Show the first error in a popup
-      const firstError = emailError || passwordError || nameError;
-      Alert.alert('Validation Error', firstError);
+      // Errors are now displayed below each field, no need for alert
       return;
     }
 
     try {
       setIsSubmitting(true);
+      setErrors({...errors, general: undefined}); // Clear any previous general errors
       const success = await signUpOwner(email, password, name);
       if (success) {
         // Show success message and redirect to home
@@ -144,9 +150,28 @@ const SignUpOwnerScreen = ({navigation}: any) => {
           ]
         );
       } else {
-        setErrors({...errors, email: 'This email is already registered'});
-        Alert.alert('Registration Error', 'An account with this email already exists');
+        // Handle signup failure - check if it's an email conflict
+        const errorMessage = apiError || 'Failed to create account. Please try again.';
+        if (errorMessage.toLowerCase().includes('already') || errorMessage.toLowerCase().includes('exists')) {
+          setErrors({
+            ...errors,
+            email: 'This email is already registered. Please use a different email or try logging in.',
+            general: undefined,
+          });
+          setTouched({...touched, email: true});
+        } else {
+          setErrors({
+            ...errors,
+            general: errorMessage,
+          });
+        }
       }
+    } catch (error: any) {
+      const errorMessage = error.message || 'An unexpected error occurred. Please try again.';
+      setErrors({
+        ...errors,
+        general: errorMessage,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -171,7 +196,7 @@ const SignUpOwnerScreen = ({navigation}: any) => {
         </Text>
 
         {/* Name Input (Optional) */}
-        <View>
+        <View style={styles.inputContainer}>
           <TextInput
             style={[
               styles.input,
@@ -184,10 +209,13 @@ const SignUpOwnerScreen = ({navigation}: any) => {
             onBlur={() => handleBlur('name')}
             autoCapitalize="words"
           />
+          {touched.name && errors.name && (
+            <Text style={styles.errorText}>{errors.name}</Text>
+          )}
         </View>
 
         {/* Email Input */}
-        <View>
+        <View style={styles.inputContainer}>
           <TextInput
             style={[
               styles.input,
@@ -202,10 +230,13 @@ const SignUpOwnerScreen = ({navigation}: any) => {
             autoCapitalize="none"
             autoCorrect={false}
           />
+          {touched.email && errors.email && (
+            <Text style={styles.errorText}>{errors.email}</Text>
+          )}
         </View>
 
         {/* Password Input */}
-        <View>
+        <View style={styles.inputContainer}>
           <TextInput
             style={[
               styles.input,
@@ -220,7 +251,17 @@ const SignUpOwnerScreen = ({navigation}: any) => {
             autoCapitalize="none"
             autoCorrect={false}
           />
+          {touched.password && errors.password && (
+            <Text style={styles.errorText}>{errors.password}</Text>
+          )}
         </View>
+
+        {/* General Error Message */}
+        {errors.general && (
+          <View style={styles.generalErrorContainer}>
+            <Text style={styles.generalErrorText}>{errors.general}</Text>
+          </View>
+        )}
 
         {/* Sign Up Button */}
         <TouchableOpacity 
@@ -280,6 +321,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 32,
   },
+  inputContainer: {
+    marginBottom: 4,
+  },
   input: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -288,11 +332,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     fontSize: 16,
-    marginBottom: 4,
   },
   inputError: {
     borderColor: '#FF3B30',
     borderWidth: 1.5,
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 14,
+    marginTop: 6,
+    marginLeft: 4,
+    marginBottom: 8,
+  },
+  generalErrorContainer: {
+    backgroundColor: '#FFEBEE',
+    borderWidth: 1,
+    borderColor: '#FF3B30',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  generalErrorText: {
+    color: '#FF3B30',
+    fontSize: 14,
+    textAlign: 'center',
+    fontWeight: '500',
   },
   signUpButton: {
     backgroundColor: '#000000',
