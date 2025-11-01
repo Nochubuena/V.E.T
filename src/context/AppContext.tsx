@@ -109,7 +109,7 @@ export const AppProvider = ({children}: {children: ReactNode}) => {
       setDogs([]);
     }
   };
-
+///ntoe
   return (
     <AppContext.Provider
       value={{
