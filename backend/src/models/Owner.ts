@@ -31,5 +31,6 @@ const OwnerSchema: Schema = new Schema(
   }
 );
 
+// Model stores user data in the 'Users' collection in MongoDB
 export default mongoose.model<IOwner>('Owner', OwnerSchema, 'Users');
 

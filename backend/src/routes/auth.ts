@@ -5,12 +5,12 @@ import Owner from '../models/Owner';
 
 const router = express.Router();
 
-// Register Owner
+// Register Owner - Stores user data in the Users collection
 router.post('/signup', async (req: Request, res: Response) => {
   try {
     const { email, password, name } = req.body;
 
-    // Check if owner exists
+    // Check if owner exists in Users collection
     const existingOwner = await Owner.findOne({ email: email.toLowerCase() });
     if (existingOwner) {
       return res.status(400).json({ error: 'Owner already exists' });
@@ -19,14 +19,25 @@ router.post('/signup', async (req: Request, res: Response) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create owner
+    // Create owner - will be saved to Users collection
     const owner = new Owner({
       email: email.toLowerCase(),
       password: hashedPassword,
       name: name || email.split('@')[0],
     });
 
+    // Save to Users collection in MongoDB
     await owner.save();
+    
+    // Verify the save by checking the database
+    const mongooseConnection = mongoose.connection;
+    const dbName = mongooseConnection.db?.databaseName || 'unknown';
+    const collectionName = owner.collection.name;
+    console.log(`✅ User saved to Users collection:`);
+    console.log(`   Database: ${dbName}`);
+    console.log(`   Collection: ${collectionName}`);
+    console.log(`   Email: ${owner.email}`);
+    console.log(`   ID: ${owner._id}`);
 
     // Generate JWT token
     const token = jwt.sign(
@@ -43,9 +54,21 @@ router.post('/signup', async (req: Request, res: Response) => {
         name: owner.name,
       },
     });
-  } catch (error) {
-    console.error('Signup error:', error);
-    res.status(500).json({ error: 'Server error' });
+  } catch (error: any) {
+    console.error('❌ Signup error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      name: error.name,
+      stack: error.stack,
+    });
+    
+    // Check for duplicate key error (unique constraint)
+    if (error.code === 11000) {
+      return res.status(400).json({ error: 'Email already registered' });
+    }
+    
+    res.status(500).json({ error: 'Server error', details: error.message });
   }
 });
 
