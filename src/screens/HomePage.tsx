@@ -82,7 +82,16 @@ const HomePage = ({navigation}: any) => {
         {/* Vital Status Section */}
         {selectedDog && (
           <TouchableOpacity style={styles.vitalsSection} onPress={navigateToVitals}>
-            <Text style={styles.vitalTitle}>{selectedDog.name}'s Vital Status</Text>
+            <View style={styles.vitalHeader}>
+              <View style={styles.vitalDogImageContainer}>
+                {selectedDog.imageUri ? (
+                  <Image source={{uri: selectedDog.imageUri}} style={styles.vitalDogImage} />
+                ) : (
+                  <Text style={styles.vitalDogEmoji}>🐕</Text>
+                )}
+              </View>
+              <Text style={styles.vitalTitle}>{selectedDog.name}'s Vital Status</Text>
+            </View>
 
             <View style={styles.vitalsContainer}>
               {/* Heart Rate */}
@@ -227,11 +236,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
+  vitalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  vitalDogImageContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#F0F0F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+  },
+  vitalDogImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  vitalDogEmoji: {
+    fontSize: 30,
+  },
   vitalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#000000',
-    marginBottom: 16,
+    flex: 1,
   },
   vitalsContainer: {
     flexDirection: 'row',

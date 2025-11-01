@@ -1,3 +1,15 @@
+/**
+ * EXAMPLE: Updated AppContext using MongoDB API
+ * 
+ * This is an example of how to update your AppContext.tsx to use the API.
+ * Replace your current AppContext.tsx with this version after setting up the backend.
+ * 
+ * IMPORTANT: Make sure to:
+ * 1. Install axios: npm install axios
+ * 2. Update API_BASE_URL in src/services/api.ts
+ * 3. Start your backend server
+ */
+
 import React, {createContext, useContext, useState, ReactNode, useEffect} from 'react';
 import api, {saveToken, removeToken} from '../services/api';
 
@@ -29,7 +41,7 @@ interface AppContextType {
   loading: boolean;
   error: string | null;
   setOwner: (owner: Owner | null) => void;
-  addDog: (dog: Dog) => Promise<boolean>;
+  addDog: (dog: Omit<Dog, 'id' | 'ownerId'>) => Promise<boolean>;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   signUpOwner: (email: string, password: string, name?: string) => Promise<boolean>;
@@ -48,12 +60,13 @@ export const AppProvider = ({children}: {children: ReactNode}) => {
   // Check if user is already logged in (from stored token)
   useEffect(() => {
     const checkAuth = async () => {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+      const token = localStorage.getItem('authToken');
       if (token) {
         try {
           // Try to fetch dogs to verify token is still valid
-          await api.get('/dogs');
+          const response = await api.get('/dogs');
           // If successful, user is authenticated
+          // You might want to also fetch owner info here
           setIsLoggedIn(true);
         } catch (error) {
           // Token is invalid, remove it
@@ -153,7 +166,7 @@ export const AppProvider = ({children}: {children: ReactNode}) => {
     setError(null);
   };
 
-  const addDog = async (dog: Dog): Promise<boolean> => {
+  const addDog = async (dog: Omit<Dog, 'id' | 'ownerId'>): Promise<boolean> => {
     if (!owner) {
       setError('Must be logged in to add a dog');
       return false;
@@ -163,15 +176,7 @@ export const AppProvider = ({children}: {children: ReactNode}) => {
       setLoading(true);
       setError(null);
       
-      // Extract data without id and ownerId (backend will generate these)
-      const dogData = {
-        name: dog.name,
-        imageUri: dog.imageUri,
-        heartRate: dog.heartRate,
-        temperature: dog.temperature,
-      };
-      
-      const response = await api.post('/dogs', dogData);
+      const response = await api.post('/dogs', dog);
       
       // Add the new dog to the local state
       setDogs([...dogs, response.data]);
@@ -224,3 +229,4 @@ export const useApp = () => {
   }
   return context;
 };
+

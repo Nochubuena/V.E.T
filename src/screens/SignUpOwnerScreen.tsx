@@ -17,6 +17,7 @@ const SignUpOwnerScreen = ({navigation}: any) => {
   const [name, setName] = useState('');
   const [errors, setErrors] = useState<{email?: string; password?: string; name?: string}>({});
   const [touched, setTouched] = useState<{email?: boolean; password?: boolean; name?: boolean}>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const {signUpOwner} = useApp();
 
   const validateEmail = (email: string): string | undefined => {
@@ -106,7 +107,7 @@ const SignUpOwnerScreen = ({navigation}: any) => {
     }
   };
 
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
     const emailError = validateEmail(email);
     const passwordError = validatePassword(password);
     const nameError = validateName(name);
@@ -125,23 +126,29 @@ const SignUpOwnerScreen = ({navigation}: any) => {
       return;
     }
 
-    if (signUpOwner(email, password, name)) {
-      // Show success message and redirect to login
-      Alert.alert(
-        'Account Created!',
-        'Your account has been created successfully! Please login to continue.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              navigation.replace('Login');
+    try {
+      setIsSubmitting(true);
+      const success = await signUpOwner(email, password, name);
+      if (success) {
+        // Show success message and redirect to home
+        Alert.alert(
+          'Account Created!',
+          'Your account has been created successfully!',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                navigation.replace('Main');
+              },
             },
-          },
-        ]
-      );
-    } else {
-      setErrors({...errors, email: 'This email is already registered'});
-      Alert.alert('Registration Error', 'An account with this email already exists');
+          ]
+        );
+      } else {
+        setErrors({...errors, email: 'This email is already registered'});
+        Alert.alert('Registration Error', 'An account with this email already exists');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -216,8 +223,12 @@ const SignUpOwnerScreen = ({navigation}: any) => {
         </View>
 
         {/* Sign Up Button */}
-        <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
-          <Text style={styles.signUpButtonText}>Sign Up</Text>
+        <TouchableOpacity 
+          style={[styles.signUpButton, isSubmitting && styles.signUpButtonDisabled]} 
+          onPress={handleSignUp}
+          disabled={isSubmitting}
+        >
+          <Text style={styles.signUpButtonText}>{isSubmitting ? 'Creating...' : 'Sign Up'}</Text>
         </TouchableOpacity>
 
         {/* Login Link */}
@@ -290,6 +301,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
     marginBottom: 20,
+  },
+  signUpButtonDisabled: {
+    opacity: 0.5,
   },
   signUpButtonText: {
     color: '#FFFFFF',

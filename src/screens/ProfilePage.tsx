@@ -85,9 +85,17 @@ const ProfilePage = ({navigation}: any) => {
         </View>
 
         {/* Dogs Section */}
-        {dogs.length > 0 && (
-          <View style={styles.dogsSection}>
+        <View style={styles.dogsSection}>
+          <View style={styles.dogsSectionHeader}>
             <Text style={styles.dogsSectionTitle}>Your Dogs ({dogs.length})</Text>
+            <TouchableOpacity 
+              style={styles.addPetButton}
+              onPress={() => navigation.navigate('SignUpDog')}
+            >
+              <Text style={styles.addPetButtonText}>+ Add New Pet</Text>
+            </TouchableOpacity>
+          </View>
+          {dogs.length > 0 ? (
             <View style={styles.dogsList}>
               {dogs.map(dog => (
                 <View key={dog.id} style={styles.dogItem}>
@@ -102,8 +110,12 @@ const ProfilePage = ({navigation}: any) => {
                 </View>
               ))}
             </View>
-          </View>
-        )}
+          ) : (
+            <View style={styles.noDogsContainer}>
+              <Text style={styles.noDogsText}>No pets registered yet</Text>
+            </View>
+          )}
+        </View>
 
         {/* Action Items */}
         <View style={styles.actionsSection}>
@@ -240,11 +252,35 @@ const styles = StyleSheet.create({
   dogsSection: {
     marginBottom: 32,
   },
+  dogsSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   dogsSectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#000000',
-    marginBottom: 16,
+  },
+  addPetButton: {
+    backgroundColor: '#000000',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  addPetButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  noDogsContainer: {
+    paddingVertical: 24,
+    alignItems: 'center',
+  },
+  noDogsText: {
+    fontSize: 16,
+    color: '#666666',
   },
   dogsList: {
     gap: 12,

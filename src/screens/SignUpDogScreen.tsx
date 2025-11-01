@@ -19,6 +19,11 @@ const SignUpDogScreen = ({navigation}: any) => {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [error, setError] = useState<string>('');
   const [touched, setTouched] = useState(false);
+  const [baseTemperature, setBaseTemperature] = useState<string>('');
+  const [baseHeartbeat, setBaseHeartbeat] = useState<string>('');
+  const [tempError, setTempError] = useState<string>('');
+  const [heartbeatError, setHeartbeatError] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const {owner, addDog} = useApp();
 
   // Web-compatible file input handler
@@ -193,6 +198,34 @@ const SignUpDogScreen = ({navigation}: any) => {
     return '';
   };
 
+  const validateTemperature = (temp: string): string => {
+    if (!temp.trim()) {
+      return 'Base temperature is required';
+    }
+    const tempValue = parseFloat(temp);
+    if (isNaN(tempValue)) {
+      return 'Temperature must be a valid number';
+    }
+    if (tempValue < 35 || tempValue > 42) {
+      return 'Temperature must be between 35 and 42°C';
+    }
+    return '';
+  };
+
+  const validateHeartbeat = (heartbeat: string): string => {
+    if (!heartbeat.trim()) {
+      return 'Base heartbeat is required';
+    }
+    const heartbeatValue = parseFloat(heartbeat);
+    if (isNaN(heartbeatValue)) {
+      return 'Heartbeat must be a valid number';
+    }
+    if (heartbeatValue < 40 || heartbeatValue > 200) {
+      return 'Heartbeat must be between 40 and 200 BPM';
+    }
+    return '';
+  };
+
   const handleDogNameChange = (text: string) => {
     setDogName(text);
     if (touched) {
@@ -204,13 +237,19 @@ const SignUpDogScreen = ({navigation}: any) => {
     }
   };
 
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
     const nameError = validateDogName(dogName);
+    const tempErrorMsg = validateTemperature(baseTemperature);
+    const heartbeatErrorMsg = validateHeartbeat(baseHeartbeat);
+    
     setTouched(true);
     setError(nameError);
+    setTempError(tempErrorMsg);
+    setHeartbeatError(heartbeatErrorMsg);
 
-    if (nameError) {
-      Alert.alert('Validation Error', nameError);
+    if (nameError || tempErrorMsg || heartbeatErrorMsg) {
+      const errors = [nameError, tempErrorMsg, heartbeatErrorMsg].filter(e => e).join('\n');
+      Alert.alert('Validation Error', errors);
       return;
     }
 
@@ -220,30 +259,42 @@ const SignUpDogScreen = ({navigation}: any) => {
       return;
     }
 
+    const tempValue = parseFloat(baseTemperature);
+    const heartbeatValue = parseFloat(baseHeartbeat);
+
     const newDog: Dog = {
-      id: Date.now().toString(),
+      id: '', // Will be set by backend
       name: dogName.trim(),
       ownerId: owner.id,
       imageUri: imageUri || undefined,
-      heartRate: 73, // Default values
-      temperature: 38.4,
+      heartRate: heartbeatValue,
+      temperature: tempValue,
       vitalRecords: [
         {
-          heartRate: 73,
-          temperature: 38.4,
+          heartRate: heartbeatValue,
+          temperature: tempValue,
           status: 'Normal',
           time: new Date().toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true}).toLowerCase(),
         },
       ],
     };
 
-    addDog(newDog);
-    Alert.alert('Success', `${dogName.trim()} has been registered successfully!`, [
-      {
-        text: 'OK',
-        onPress: () => navigation.navigate('HomeTab'),
-      },
-    ]);
+    try {
+      setIsSubmitting(true);
+      const success = await addDog(newDog);
+      if (success) {
+        Alert.alert('Success', `${dogName.trim()} has been registered successfully!`, [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('HomeTab'),
+          },
+        ]);
+      } else {
+        Alert.alert('Error', `A pet named "${dogName.trim()}" already exists. Please choose a different name.`);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -307,13 +358,14 @@ const SignUpDogScreen = ({navigation}: any) => {
         </View>
 
         {/* Dog Name Input */}
-        <View>
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Dog's Name</Text>
           <TextInput
             style={[
               styles.input,
               touched && error && styles.inputError,
             ]}
-            placeholder="Dog's Name"
+            placeholder="Enter your dog's name"
             placeholderTextColor="#999999"
             value={dogName}
             onChangeText={handleDogNameChange}
@@ -321,17 +373,75 @@ const SignUpDogScreen = ({navigation}: any) => {
               setTouched(true);
               const errorMsg = validateDogName(dogName);
               setError(errorMsg);
-              if (errorMsg) {
-                Alert.alert('Validation Error', errorMsg);
-              }
             }}
             autoCapitalize="words"
           />
+          {touched && error ? <Text style={styles.errorText}>{error}</Text> : null}
+        </View>
+
+        {/* Base Temperature Input */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Base Temperature (°C)</Text>
+          <TextInput
+            style={[
+              styles.input,
+              tempError && styles.inputError,
+            ]}
+            placeholder="Enter base temperature (e.g., 38.4)"
+            placeholderTextColor="#999999"
+            value={baseTemperature}
+            onChangeText={(text) => {
+              setBaseTemperature(text);
+              if (tempError) {
+                const errorMsg = validateTemperature(text);
+                setTempError(errorMsg);
+              }
+            }}
+            onBlur={() => {
+              const errorMsg = validateTemperature(baseTemperature);
+              setTempError(errorMsg);
+            }}
+            keyboardType="decimal-pad"
+          />
+          {tempError ? <Text style={styles.errorText}>{tempError}</Text> : null}
+        </View>
+
+        {/* Base Heartbeat Input */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Base Heartbeat (BPM)</Text>
+          <TextInput
+            style={[
+              styles.input,
+              heartbeatError && styles.inputError,
+            ]}
+            placeholder="Enter base heartbeat (e.g., 73)"
+            placeholderTextColor="#999999"
+            value={baseHeartbeat}
+            onChangeText={(text) => {
+              setBaseHeartbeat(text);
+              if (heartbeatError) {
+                const errorMsg = validateHeartbeat(text);
+                setHeartbeatError(errorMsg);
+              }
+            }}
+            onBlur={() => {
+              const errorMsg = validateHeartbeat(baseHeartbeat);
+              setHeartbeatError(errorMsg);
+            }}
+            keyboardType="number-pad"
+          />
+          {heartbeatError ? <Text style={styles.errorText}>{heartbeatError}</Text> : null}
         </View>
 
         {/* Sign Up Button */}
-        <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
-          <Text style={styles.signUpButtonText}>Register Dog</Text>
+        <TouchableOpacity 
+          style={[styles.signUpButton, isSubmitting && styles.signUpButtonDisabled]} 
+          onPress={handleSignUp}
+          disabled={isSubmitting}
+        >
+          <Text style={styles.signUpButtonText}>
+            {isSubmitting ? 'Registering...' : 'Register Dog'}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -420,6 +530,15 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
     fontWeight: '500',
   },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 8,
+  },
   input: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -428,11 +547,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     fontSize: 16,
-    marginBottom: 4,
   },
   inputError: {
     borderColor: '#FF3B30',
     borderWidth: 1.5,
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#FF3B30',
+    marginTop: 4,
+    marginLeft: 4,
   },
   signUpButton: {
     backgroundColor: '#000000',
@@ -440,6 +564,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
+  },
+  signUpButtonDisabled: {
+    opacity: 0.5,
   },
   signUpButtonText: {
     color: '#FFFFFF',

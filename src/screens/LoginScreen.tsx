@@ -16,6 +16,7 @@ const LoginScreen = ({navigation}: any) => {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{email?: string; password?: string}>({});
   const [touched, setTouched] = useState<{email?: boolean; password?: boolean}>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const {login} = useApp();
 
   const validateEmail = (email: string): string | undefined => {
@@ -71,7 +72,7 @@ const LoginScreen = ({navigation}: any) => {
     }
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const emailError = validateEmail(email);
     const passwordError = validatePassword(password);
     
@@ -88,11 +89,17 @@ const LoginScreen = ({navigation}: any) => {
       return;
     }
 
-    if (login(email, password)) {
-      navigation.replace('Main');
-    } else {
-      setErrors({...errors, password: 'Invalid email or password'});
-      Alert.alert('Login Error', 'Invalid email or password');
+    try {
+      setIsSubmitting(true);
+      const success = await login(email, password);
+      if (success) {
+        navigation.replace('Main');
+      } else {
+        setErrors({...errors, password: 'Invalid email or password'});
+        Alert.alert('Login Error', 'Invalid email or password');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -151,8 +158,12 @@ const LoginScreen = ({navigation}: any) => {
         </View>
 
         {/* Login Button */}
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>Login</Text>
+        <TouchableOpacity 
+          style={[styles.loginButton, isSubmitting && styles.loginButtonDisabled]} 
+          onPress={handleLogin}
+          disabled={isSubmitting}
+        >
+          <Text style={styles.loginButtonText}>{isSubmitting ? 'Logging in...' : 'Login'}</Text>
         </TouchableOpacity>
 
         {/* Sign Up Section */}
@@ -219,6 +230,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
     marginBottom: 20,
+  },
+  loginButtonDisabled: {
+    opacity: 0.5,
   },
   loginButtonText: {
     color: '#FFFFFF',
