@@ -111,10 +111,10 @@ const LoginScreen = ({navigation}: any) => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* App Title */}
-        <Text style={styles.appTitle}>V.E.T. App</Text>
+        <Text style={styles.appTitle}>V.E.T. Web</Text>
 
         {/* Section Header */}
-        <Text style={styles.sectionHeader}>Welcome back</Text>
+        <Text style={styles.sectionHeader}>Welcome</Text>
 
         {/* Instructions */}
         <Text style={styles.instructions}>

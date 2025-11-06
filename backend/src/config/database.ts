@@ -2,10 +2,11 @@ import mongoose from 'mongoose';
 
 const connectDB = async (): Promise<void> => {
   try {
-    const mongoURI = process.env.MONGODB_URI;
+    const mongoURI = process.env.MONGODB_URI ||
+      'mongodb+srv://username:password@vetapp.leeyqyu.mongodb.net/Data?retryWrites=true&w=majority';
     
-    if (!mongoURI) {
-      throw new Error('MONGODB_URI is not defined in .env file');
+    if (!process.env.MONGODB_URI) {
+      console.warn('⚠️ MONGODB_URI not found in environment. Using default Atlas host vetapp.leeyqyu.mongodb.net. Update credentials in backend/.env.');
     }
 
     await mongoose.connect(mongoURI);
