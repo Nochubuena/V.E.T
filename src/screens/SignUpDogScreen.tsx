@@ -283,15 +283,34 @@ const SignUpDogScreen = ({navigation}: any) => {
       setIsSubmitting(true);
       const success = await addDog(newDog);
       if (success) {
-        Alert.alert('Success', `${dogName.trim()} has been registered successfully!`, [
-          {
-            text: 'OK',
-            onPress: () => navigation.navigate('HomeTab'),
-          },
-        ]);
+        // Show success confirmation message
+        Alert.alert(
+          'Dog Registered!',
+          `Dog registration successful. ${dogName.trim()} has been added to your account.`,
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                // Reset form
+                setDogName('');
+                setImageUri(null);
+                setBaseTemperature('');
+                setBaseHeartbeat('');
+                setError('');
+                setTempError('');
+                setHeartbeatError('');
+                setTouched(false);
+                // Navigate to home
+                navigation.navigate('HomeTab');
+              },
+            },
+          ]
+        );
       } else {
         Alert.alert('Error', `A pet named "${dogName.trim()}" already exists. Please choose a different name.`);
       }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to register dog. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

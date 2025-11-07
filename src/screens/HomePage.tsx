@@ -85,6 +85,16 @@ const HomePage = ({navigation}: any) => {
                   <Text style={styles.dogName}>{dog.name}</Text>
                 </TouchableOpacity>
               ))}
+              {/* Add Dog Button beside dog profiles */}
+              <TouchableOpacity 
+                style={styles.addDogButton}
+                onPress={navigateToSignUpDog}
+              >
+                <View style={styles.addDogButtonIcon}>
+                  <Text style={styles.addDogButtonPlus}>+</Text>
+                </View>
+                <Text style={styles.addDogButtonText}>Add Dog</Text>
+              </TouchableOpacity>
             </ScrollView>
           )}
         </View>
@@ -390,6 +400,33 @@ const styles = StyleSheet.create({
   },
   selectedDogProfile: {
     opacity: 1,
+  },
+  addDogButton: {
+    alignItems: 'center',
+    marginRight: 20,
+    justifyContent: 'center',
+  },
+  addDogButtonIcon: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#F0F0F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    borderStyle: 'dashed',
+  },
+  addDogButtonPlus: {
+    fontSize: 32,
+    color: '#666666',
+    fontWeight: '300',
+  },
+  addDogButtonText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#666666',
+    fontWeight: '500',
   },
 });
 
