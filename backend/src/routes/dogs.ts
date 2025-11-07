@@ -16,6 +16,7 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
       heartRate: dog.heartRate,
       temperature: dog.temperature,
       vitalRecords: dog.vitalRecords || [],
+      isDeceased: dog.isDeceased || false,
     })));
   } catch (error) {
     console.error('Get dogs error:', error);
@@ -57,6 +58,7 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
       heartRate: dog.heartRate,
       temperature: dog.temperature,
       vitalRecords: dog.vitalRecords || [],
+      isDeceased: dog.isDeceased || false,
     });
   } catch (error) {
     console.error('Add dog error:', error);
@@ -100,6 +102,7 @@ router.put('/:id/vitals', authenticate, async (req: AuthRequest, res: Response) 
       heartRate: dog.heartRate,
       temperature: dog.temperature,
       vitalRecords: dog.vitalRecords || [],
+      isDeceased: dog.isDeceased || false,
     });
   } catch (error) {
     console.error('Update vitals error:', error);
@@ -107,7 +110,37 @@ router.put('/:id/vitals', authenticate, async (req: AuthRequest, res: Response) 
   }
 });
 
-// Delete a dog
+// Mark dog as deceased
+router.patch('/:id/deceased', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const dog = await Dog.findOne({ _id: id, ownerId: req.userId });
+    if (!dog) {
+      return res.status(404).json({ error: 'Dog not found' });
+    }
+
+    dog.isDeceased = true;
+    await dog.save();
+
+    res.json({
+      id: dog._id.toString(),
+      name: dog.name,
+      ownerId: dog.ownerId.toString(),
+      imageUri: dog.imageUri,
+      heartRate: dog.heartRate,
+      temperature: dog.temperature,
+      vitalRecords: dog.vitalRecords || [],
+      isDeceased: dog.isDeceased,
+      message: 'Dog marked as deceased',
+    });
+  } catch (error) {
+    console.error('Mark deceased error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete a dog (complete deletion from database)
 router.delete('/:id', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;

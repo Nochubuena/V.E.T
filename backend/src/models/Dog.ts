@@ -15,6 +15,7 @@ export interface IDog extends Document {
   heartRate?: number;
   temperature?: number;
   vitalRecords?: IVitalRecord[];
+  isDeceased?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -50,6 +51,10 @@ const DogSchema: Schema = new Schema(
     vitalRecords: {
       type: [VitalRecordSchema],
       default: [],
+    },
+    isDeceased: {
+      type: Boolean,
+      default: false,
     },
   },
   {

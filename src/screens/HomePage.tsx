@@ -96,6 +96,9 @@ const HomePage = ({navigation}: any) => {
                     )}
                   </View>
                   <Text style={styles.dogName}>{dog.name}</Text>
+                  {dog.isDeceased && (
+                    <Text style={styles.deceasedLabel}>Deceased</Text>
+                  )}
                 </TouchableOpacity>
               ))}
               {/* Add Dog Button beside dog profiles */}
@@ -308,6 +311,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 14,
     color: '#000000',
+  },
+  deceasedLabel: {
+    fontSize: 10,
+    color: '#FF3B30',
+    fontWeight: '600',
+    marginTop: 2,
   },
   divider: {
     height: 1,

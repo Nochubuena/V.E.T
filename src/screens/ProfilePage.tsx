@@ -12,7 +12,7 @@ import {
 import {useApp} from '../context/AppContext';
 
 const ProfilePage = ({navigation}: any) => {
-  const {owner, dogs, logout} = useApp();
+  const {owner, dogs, logout, deleteDog, markDogDeceased} = useApp();
 
   const handleLogOut = () => {
     Alert.alert(
@@ -63,6 +63,58 @@ const ProfilePage = ({navigation}: any) => {
     );
   };
 
+  const handleDeleteDog = (dog: any) => {
+    Alert.alert(
+      'Delete Dog',
+      `What would you like to do with ${dog.name}?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Mark as Deceased',
+          onPress: async () => {
+            const success = await markDogDeceased(dog.id);
+            if (success) {
+              Alert.alert('Success', `${dog.name} has been marked as deceased.`);
+            } else {
+              Alert.alert('Error', 'Failed to mark dog as deceased. Please try again.');
+            }
+          },
+        },
+        {
+          text: 'Delete Account',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Confirm Deletion',
+              `Are you sure you want to permanently delete ${dog.name}? This action cannot be undone.`,
+              [
+                {
+                  text: 'Cancel',
+                  style: 'cancel',
+                },
+                {
+                  text: 'Delete',
+                  style: 'destructive',
+                  onPress: async () => {
+                    const success = await deleteDog(dog.id);
+                    if (success) {
+                      Alert.alert('Success', `${dog.name} has been deleted.`);
+                    } else {
+                      Alert.alert('Error', 'Failed to delete dog. Please try again.');
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header with Back Button */}
@@ -98,20 +150,32 @@ const ProfilePage = ({navigation}: any) => {
           {dogs.length > 0 ? (
             <View style={styles.dogsList}>
               {dogs.map(dog => (
-                <TouchableOpacity 
-                  key={dog.id} 
-                  style={styles.dogItem}
-                  onPress={() => navigation.navigate('ProfilePageVitals', {dogId: dog.id})}
-                >
-                  <View style={styles.dogItemImageContainer}>
-                    {dog.imageUri ? (
-                      <Image source={{uri: dog.imageUri}} style={styles.dogItemImage} />
-                    ) : (
-                      <Text style={styles.dogItemEmoji}>🐕</Text>
-                    )}
-                  </View>
-                  <Text style={styles.dogItemName}>{dog.name}</Text>
-                </TouchableOpacity>
+                <View key={dog.id} style={styles.dogItemContainer}>
+                  <TouchableOpacity 
+                    style={styles.dogItem}
+                    onPress={() => navigation.navigate('ProfilePageVitals', {dogId: dog.id})}
+                  >
+                    <View style={styles.dogItemImageContainer}>
+                      {dog.imageUri ? (
+                        <Image source={{uri: dog.imageUri}} style={styles.dogItemImage} />
+                      ) : (
+                        <Text style={styles.dogItemEmoji}>🐕</Text>
+                      )}
+                    </View>
+                    <View style={styles.dogItemTextContainer}>
+                      <Text style={styles.dogItemName}>{dog.name}</Text>
+                      {dog.isDeceased && (
+                        <Text style={styles.deceasedLabel}>Deceased</Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.deleteButton}
+                    onPress={() => handleDeleteDog(dog)}
+                  >
+                    <Text style={styles.deleteButtonText}>⋯</Text>
+                  </TouchableOpacity>
+                </View>
               ))}
             </View>
           ) : (
@@ -289,14 +353,23 @@ const styles = StyleSheet.create({
   dogsList: {
     gap: 12,
   },
-  dogItem: {
+  dogItemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F5F5F5',
     borderRadius: 12,
-    padding: 16,
     borderWidth: 1,
     borderColor: '#E0E0E0',
+    overflow: 'hidden',
+  },
+  dogItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    padding: 16,
+  },
+  dogItemTextContainer: {
+    flex: 1,
   },
   dogItemImageContainer: {
     width: 50,
@@ -320,6 +393,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#000000',
+  },
+  deceasedLabel: {
+    fontSize: 12,
+    color: '#FF3B30',
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  deleteButton: {
+    padding: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteButtonText: {
+    fontSize: 20,
+    color: '#666666',
+    fontWeight: 'bold',
   },
 });
 

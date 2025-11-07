@@ -8,6 +8,7 @@ export interface Dog {
   imageUri?: string;
   heartRate?: number;
   temperature?: number;
+  isDeceased?: boolean;
   vitalRecords?: Array<{
     heartRate: number;
     temperature: number;
@@ -34,6 +35,8 @@ interface AppContextType {
   logout: () => void;
   signUpOwner: (email: string, password: string, name?: string) => Promise<boolean>;
   fetchDogs: () => Promise<void>;
+  deleteDog: (dogId: string) => Promise<boolean>;
+  markDogDeceased: (dogId: string) => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -186,6 +189,50 @@ export const AppProvider = ({children}: {children: ReactNode}) => {
     }
   };
 
+  const deleteDog = async (dogId: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      await api.delete(`/dogs/${dogId}`);
+      
+      // Remove dog from local state
+      setDogs(dogs.filter(dog => dog.id !== dogId));
+      
+      return true;
+    } catch (error: any) {
+      console.error('Delete dog error:', error);
+      setError(error.response?.data?.error || 'Failed to delete dog');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const markDogDeceased = async (dogId: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await api.patch(`/dogs/${dogId}/deceased`);
+      
+      // Update dog in local state
+      setDogs(dogs.map(dog => 
+        dog.id === dogId 
+          ? { ...dog, isDeceased: true }
+          : dog
+      ));
+      
+      return true;
+    } catch (error: any) {
+      console.error('Mark deceased error:', error);
+      setError(error.response?.data?.error || 'Failed to mark dog as deceased');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const updateOwner = (newOwner: Owner | null) => {
     setOwner(newOwner);
     if (newOwner) {
@@ -211,6 +258,8 @@ export const AppProvider = ({children}: {children: ReactNode}) => {
         logout,
         signUpOwner,
         fetchDogs,
+        deleteDog,
+        markDogDeceased,
       }}>
       {children}
     </AppContext.Provider>
