@@ -98,7 +98,11 @@ const ProfilePage = ({navigation}: any) => {
           {dogs.length > 0 ? (
             <View style={styles.dogsList}>
               {dogs.map(dog => (
-                <View key={dog.id} style={styles.dogItem}>
+                <TouchableOpacity 
+                  key={dog.id} 
+                  style={styles.dogItem}
+                  onPress={() => navigation.navigate('ProfilePageVitals', {dogId: dog.id})}
+                >
                   <View style={styles.dogItemImageContainer}>
                     {dog.imageUri ? (
                       <Image source={{uri: dog.imageUri}} style={styles.dogItemImage} />
@@ -107,7 +111,7 @@ const ProfilePage = ({navigation}: any) => {
                     )}
                   </View>
                   <Text style={styles.dogItemName}>{dog.name}</Text>
-                </View>
+                </TouchableOpacity>
               ))}
             </View>
           ) : (

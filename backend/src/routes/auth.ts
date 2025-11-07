@@ -11,6 +11,15 @@ router.post('/signup', async (req: Request, res: Response) => {
   try {
     const { email, password, name } = req.body;
 
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
     // Check if owner exists in Users collection
     const existingOwner = await Owner.findOne({ email: email.toLowerCase() });
     if (existingOwner) {

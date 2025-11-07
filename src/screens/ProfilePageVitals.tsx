@@ -18,8 +18,26 @@ const ProfilePageVitals = ({navigation, route}: any) => {
   const {dogs} = useApp();
   const dogId = route?.params?.dogId;
   
-  const dog = dogs.find(d => d.id === dogId) || dogs[0];
+  const dog = dogId ? dogs.find(d => d.id === dogId) : dogs[0];
   const dogName = dog?.name || "Dog Name";
+  
+  // If no dog found, show error message
+  if (!dog && dogs.length === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <View style={styles.backButton}>
+              <Text style={styles.backArrow}>‹</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.scrollContent}>
+          <Text style={styles.dogName}>No dog found</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   // Get heart rate data from dog's vital records or use sample data
   const heartRateData = dog?.vitalRecords 
@@ -37,6 +55,11 @@ const ProfilePageVitals = ({navigation, route}: any) => {
 
   const getChartPath = (data: number[], maxValue: number) => {
     if (data.length === 0 || maxValue === 0) return '';
+    // Handle single data point case
+    if (data.length === 1) {
+      const y = chartHeight - ((data[0] / maxValue) * chartHeight);
+      return `M 0,${y} L ${chartWidth},${y}`;
+    }
     const stepX = chartWidth / (data.length - 1);
     const points = data.map((value, index) => {
       const x = index * stepX;
@@ -148,7 +171,9 @@ const ProfilePageVitals = ({navigation, route}: any) => {
               
               {/* Data points */}
               {heartRateData.map((value, index) => {
-                const x = (index / (heartRateData.length - 1)) * chartWidth;
+                const x = heartRateData.length === 1 
+                  ? chartWidth / 2 
+                  : (index / (heartRateData.length - 1)) * chartWidth;
                 const y = chartHeight - ((value / maxHeartRate) * chartHeight);
                 return (
                   <Circle
@@ -212,7 +237,9 @@ const ProfilePageVitals = ({navigation, route}: any) => {
               
               {/* Data points */}
               {temperatureData.map((value, index) => {
-                const x = (index / (temperatureData.length - 1)) * chartWidth;
+                const x = temperatureData.length === 1 
+                  ? chartWidth / 2 
+                  : (index / (temperatureData.length - 1)) * chartWidth;
                 const y = chartHeight - ((value / maxTemperature) * chartHeight);
                 return (
                   <Circle

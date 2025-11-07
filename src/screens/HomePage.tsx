@@ -15,9 +15,22 @@ const HomePage = ({navigation}: any) => {
   const [selectedDog, setSelectedDog] = useState<Dog | null>(null);
 
   useEffect(() => {
-    if (dogs.length > 0 && !selectedDog) {
-      setSelectedDog(dogs[0]);
+    if (dogs.length > 0) {
+      // If no dog is selected, select the first one
+      if (!selectedDog) {
+        setSelectedDog(dogs[0]);
+      } else {
+        // If selected dog is no longer in the list, select the first one
+        const dogStillExists = dogs.find(d => d.id === selectedDog.id);
+        if (!dogStillExists) {
+          setSelectedDog(dogs[0]);
+        }
+      }
+    } else {
+      // No dogs available, clear selection
+      setSelectedDog(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dogs]);
 
   const navigateToVitals = () => {

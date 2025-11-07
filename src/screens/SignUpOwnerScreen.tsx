@@ -136,15 +136,15 @@ const SignUpOwnerScreen = ({navigation}: any) => {
       setErrors({...errors, general: undefined}); // Clear any previous general errors
       const success = await signUpOwner(email, password, name);
       if (success) {
-        // Show success message and redirect to home
+        // Show success message and redirect to login page
         Alert.alert(
           'Account Created!',
-          'Your account has been created successfully!',
+          'Account creation successful proceed to login page',
           [
             {
               text: 'OK',
               onPress: () => {
-                navigation.replace('Main');
+                navigation.replace('Login');
               },
             },
           ]
