@@ -8,6 +8,7 @@ export interface IVitalRecord {
 }
 
 export interface IDog extends Document {
+  _id: mongoose.Types.ObjectId;
   name: string;
   ownerId: mongoose.Types.ObjectId;
   imageUri?: string;

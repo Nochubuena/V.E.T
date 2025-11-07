@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IOwner extends Document {
+  _id: mongoose.Types.ObjectId;
   email: string;
   password: string;
   name?: string;

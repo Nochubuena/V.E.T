@@ -79,9 +79,10 @@ const startServer = async () => {
     await connectDB();
     
     // Start server after DB connection is established
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-      console.log(`📡 API endpoints available at http://localhost:${PORT}/api`);
+    // Bind to 0.0.0.0 for Render deployment (allows external connections)
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📡 API endpoints available at /api`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
