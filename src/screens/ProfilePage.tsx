@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,17 @@ import {
   ScrollView,
   Image,
   Alert,
+  Platform,
+  Modal,
 } from 'react-native';
 import {CommonActions} from '@react-navigation/native';
 import {useApp} from '../context/AppContext';
 
 const ProfilePage = ({navigation}: any) => {
   const {owner, dogs, logout, deleteDog, markDogDeceased} = useApp();
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [selectedDog, setSelectedDog] = useState<any>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleLogOut = () => {
     Alert.alert(
@@ -54,55 +59,47 @@ const ProfilePage = ({navigation}: any) => {
   };
 
   const handleDeleteDog = (dog: any) => {
-    Alert.alert(
-      'Delete Dog',
-      `What would you like to do with ${dog.name}?`,
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Mark as Deceased',
-          onPress: async () => {
-            const success = await markDogDeceased(dog.id);
-            if (success) {
-              Alert.alert('Success', `${dog.name} has been marked as deceased.`);
-            } else {
-              Alert.alert('Error', 'Failed to mark dog as deceased. Please try again.');
-            }
-          },
-        },
-        {
-          text: 'Delete Account',
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert(
-              'Confirm Deletion',
-              `Are you sure you want to permanently delete ${dog.name}? This action cannot be undone.`,
-              [
-                {
-                  text: 'Cancel',
-                  style: 'cancel',
-                },
-                {
-                  text: 'Delete',
-                  style: 'destructive',
-                  onPress: async () => {
-                    const success = await deleteDog(dog.id);
-                    if (success) {
-                      Alert.alert('Success', `${dog.name} has been deleted.`);
-                    } else {
-                      Alert.alert('Error', 'Failed to delete dog. Please try again.');
-                    }
-                  },
-                },
-              ]
-            );
-          },
-        },
-      ]
-    );
+    console.log('handleDeleteDog called with:', dog.name);
+    setSelectedDog(dog);
+    setShowDeleteConfirm(false);
+    setDeleteModalVisible(true);
+    console.log('Modal should be visible now');
+  };
+
+  const handleMarkDeceased = async () => {
+    if (!selectedDog) return;
+    setDeleteModalVisible(false);
+    const success = await markDogDeceased(selectedDog.id);
+    if (success) {
+      Alert.alert('Success', `${selectedDog.name} has been marked as deceased.`);
+    } else {
+      Alert.alert('Error', 'Failed to mark dog as deceased. Please try again.');
+    }
+    setSelectedDog(null);
+  };
+
+  const handleDeleteAccount = () => {
+    if (!selectedDog) return;
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedDog) return;
+    setDeleteModalVisible(false);
+    setShowDeleteConfirm(false);
+    const success = await deleteDog(selectedDog.id);
+    if (success) {
+      Alert.alert('Success', `${selectedDog.name} has been deleted.`);
+    } else {
+      Alert.alert('Error', 'Failed to delete dog. Please try again.');
+    }
+    setSelectedDog(null);
+  };
+
+  const closeModal = () => {
+    setDeleteModalVisible(false);
+    setShowDeleteConfirm(false);
+    setSelectedDog(null);
   };
 
   return (
@@ -163,10 +160,11 @@ const ProfilePage = ({navigation}: any) => {
                   <TouchableOpacity 
                     style={styles.deleteButton}
                     onPress={() => {
-                      console.log('Delete button pressed for:', dog.name);
+                      console.log('Delete button clicked for:', dog.name);
                       handleDeleteDog(dog);
                     }}
                     activeOpacity={0.5}
+                    hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
                   >
                     <Text style={styles.deleteButtonText}>⋯</Text>
                   </TouchableOpacity>
@@ -198,6 +196,83 @@ const ProfilePage = ({navigation}: any) => {
           <View style={styles.divider} />
         </View>
       </ScrollView>
+
+      {/* Debug: Show modal state */}
+      {__DEV__ && deleteModalVisible && (
+        <View style={{position: 'absolute', top: 100, left: 20, backgroundColor: 'yellow', padding: 10, zIndex: 99999}}>
+          <Text>Modal State: {deleteModalVisible ? 'VISIBLE' : 'HIDDEN'}</Text>
+          <Text>Selected Dog: {selectedDog?.name || 'None'}</Text>
+        </View>
+      )}
+
+      {/* Delete Dog Modal */}
+      <Modal
+        visible={deleteModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeModal}
+        statusBarTranslucent={true}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={closeModal}
+        >
+          <View 
+            style={styles.modalContent}
+          >
+            {!showDeleteConfirm ? (
+              <>
+                <Text style={styles.modalTitle}>Delete Dog</Text>
+                <Text style={styles.modalMessage}>
+                  What would you like to do with {selectedDog?.name}?
+                </Text>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalButtonCancel]}
+                    onPress={closeModal}
+                  >
+                    <Text style={styles.modalButtonTextCancel}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalButtonPrimary]}
+                    onPress={handleMarkDeceased}
+                  >
+                    <Text style={styles.modalButtonText}>Mark as Deceased</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalButtonDanger]}
+                    onPress={handleDeleteAccount}
+                  >
+                    <Text style={styles.modalButtonTextDanger}>Delete Account</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={styles.modalTitle}>Confirm Deletion</Text>
+                <Text style={styles.modalMessage}>
+                  Are you sure you want to permanently delete {selectedDog?.name}? This action cannot be undone.
+                </Text>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalButtonCancel]}
+                    onPress={() => setShowDeleteConfirm(false)}
+                  >
+                    <Text style={styles.modalButtonTextCancel}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalButtonDanger]}
+                    onPress={confirmDelete}
+                  >
+                    <Text style={styles.modalButtonTextDanger}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Bottom Navigation Bar (handled by Tab Navigator in App.tsx) */}
     </SafeAreaView>
@@ -344,7 +419,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E0E0E0',
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   dogItem: {
     flexDirection: 'row',
@@ -385,14 +460,87 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   deleteButton: {
-    padding: 16,
+    padding: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    minWidth: 44,
+    minHeight: 44,
   },
   deleteButtonText: {
-    fontSize: 20,
+    fontSize: 24,
     color: '#666666',
     fontWeight: 'bold',
+    lineHeight: 24,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    width: '85%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 10000,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#666666',
+    marginBottom: 24,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  modalButtons: {
+    gap: 12,
+  },
+  modalButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: '#F5F5F5',
+  },
+  modalButtonPrimary: {
+    backgroundColor: '#007AFF',
+  },
+  modalButtonDanger: {
+    backgroundColor: '#FF3B30',
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalButtonTextCancel: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalButtonTextDanger: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
