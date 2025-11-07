@@ -10,6 +10,7 @@ import {
   Alert,
   Image,
   Platform,
+  Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import {useApp, Dog} from '../context/AppContext';
@@ -24,6 +25,8 @@ const SignUpDogScreen = ({navigation}: any) => {
   const [tempError, setTempError] = useState<string>('');
   const [heartbeatError, setHeartbeatError] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [addedDogName, setAddedDogName] = useState<string>('');
   const {owner, addDog} = useApp();
 
   // Web-compatible file input handler
@@ -283,29 +286,18 @@ const SignUpDogScreen = ({navigation}: any) => {
       setIsSubmitting(true);
       const success = await addDog(newDog);
       if (success) {
-        // Show success confirmation message
-        Alert.alert(
-          'Dog Registered!',
-          `Dog registration successful. ${dogName.trim()} has been added to your account.`,
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                // Reset form
-                setDogName('');
-                setImageUri(null);
-                setBaseTemperature('');
-                setBaseHeartbeat('');
-                setError('');
-                setTempError('');
-                setHeartbeatError('');
-                setTouched(false);
-                // Navigate to home
-                navigation.navigate('HomeTab');
-              },
-            },
-          ]
-        );
+        // Store the dog name and show success modal
+        setAddedDogName(dogName.trim());
+        setSuccessModalVisible(true);
+        // Reset form
+        setDogName('');
+        setImageUri(null);
+        setBaseTemperature('');
+        setBaseHeartbeat('');
+        setError('');
+        setTempError('');
+        setHeartbeatError('');
+        setTouched(false);
       } else {
         Alert.alert('Error', `A pet named "${dogName.trim()}" already exists. Please choose a different name.`);
       }
@@ -463,6 +455,37 @@ const SignUpDogScreen = ({navigation}: any) => {
           </Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Success Confirmation Modal */}
+      <Modal
+        visible={successModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSuccessModalVisible(false)}
+        statusBarTranslucent={true}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setSuccessModalVisible(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Success!</Text>
+            <Text style={styles.modalMessage}>
+              {addedDogName} has been added:
+            </Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                setSuccessModalVisible(false);
+                navigation.navigate('HomeTab');
+              }}
+            >
+              <Text style={styles.modalButtonText}>Return to Home</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -588,6 +611,51 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   signUpButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    width: '85%',
+    maxWidth: 400,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#666666',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  modalButton: {
+    backgroundColor: '#000000',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    width: '100%',
+    alignItems: 'center',
+  },
+  modalButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',

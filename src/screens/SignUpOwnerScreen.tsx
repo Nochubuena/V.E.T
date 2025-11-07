@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   ScrollView,
   Alert,
+  Modal,
 } from 'react-native';
 import {useApp} from '../context/AppContext';
 
@@ -18,6 +19,7 @@ const SignUpOwnerScreen = ({navigation}: any) => {
   const [errors, setErrors] = useState<{email?: string; password?: string; name?: string; general?: string}>({});
   const [touched, setTouched] = useState<{email?: boolean; password?: boolean; name?: boolean}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
   const {signUpOwner, error: apiError} = useApp();
 
   const validateEmail = (email: string): string | undefined => {
@@ -136,19 +138,8 @@ const SignUpOwnerScreen = ({navigation}: any) => {
       setErrors({...errors, general: undefined}); // Clear any previous general errors
       const success = await signUpOwner(email, password, name);
       if (success) {
-        // Show success message and redirect to login page
-        Alert.alert(
-          'Account Created!',
-          'Account creation successful proceed to login page',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                navigation.replace('Login');
-              },
-            },
-          ]
-        );
+        // Show success modal
+        setSuccessModalVisible(true);
       } else {
         // Handle signup failure - check if it's an email conflict
         const errorMessage = apiError || 'Failed to create account. Please try again.';
@@ -286,6 +277,34 @@ const SignUpOwnerScreen = ({navigation}: any) => {
           <Text style={styles.link}>Privacy Policy</Text>
         </Text>
       </ScrollView>
+
+      {/* Success Confirmation Modal */}
+      <Modal
+        visible={successModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSuccessModalVisible(false)}
+        statusBarTranslucent={true}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setSuccessModalVisible(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Sign up completed</Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                setSuccessModalVisible(false);
+                navigation.replace('Login');
+              }}
+            >
+              <Text style={styles.modalButtonText}>Go to Login</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -397,6 +416,45 @@ const styles = StyleSheet.create({
   link: {
     color: '#007AFF',
     textDecorationLine: 'underline',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    width: '85%',
+    maxWidth: 400,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  modalButton: {
+    backgroundColor: '#000000',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    width: '100%',
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
