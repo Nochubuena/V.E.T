@@ -64,6 +64,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/dogs', dogsRoutes);
 
+// Root health check for Render (simple, fast response)
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'V.E.T API is running'
+  });
+});
+
 // Health check (with DB connection status)
 app.get('/api/health', (req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
@@ -74,24 +82,26 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Initialize server
-const startServer = async () => {
-  try {
-    // Connect to MongoDB first
-    await connectDB();
-    
-    // Start server after DB connection is established
-    // Bind to 0.0.0.0 for Render deployment (allows external connections)
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📡 API endpoints available at /api`);
-    });
-  } catch (error) {
-    console.error('❌ Failed to start server:', error);
+// Start server immediately (don't wait for DB)
+// Bind to 0.0.0.0 for Render deployment (allows external connections)
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📡 API endpoints available at /api`);
+  
+  // Connect to MongoDB in the background (non-blocking)
+  connectDB().catch((error) => {
+    console.error('❌ MongoDB connection failed:', error);
+    console.error('⚠️ Server is running but database is not connected');
+    // Don't exit - let server continue running
+  });
+});
+
+// Handle server errors
+server.on('error', (error: any) => {
+  console.error('❌ Server error:', error);
+  if (error.code === 'EADDRINUSE') {
+    console.error(`⚠️ Port ${PORT} is already in use`);
     process.exit(1);
   }
-};
-
-// Start the server
-startServer();
+});
 
