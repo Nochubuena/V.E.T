@@ -29,6 +29,7 @@ const corsOptions = {
       'http://localhost:3000',
       'http://localhost:8080',
       'https://v-e-t.vercel.app',
+      'https://v-e-t-1.onrender.com',
       process.env.FRONTEND_URL,
     ].filter(Boolean) as string[];
     
@@ -37,10 +38,11 @@ const corsOptions = {
       return origin === allowedOrigin || origin.startsWith(allowedOrigin);
     });
     
-    // Also allow any *.vercel.app domain
+    // Also allow any *.vercel.app and *.onrender.com domains
     const isVercelDomain = origin.endsWith('.vercel.app');
+    const isRenderDomain = origin.endsWith('.onrender.com');
     
-    if (isAllowed || isVercelDomain) {
+    if (isAllowed || isVercelDomain || isRenderDomain) {
       callback(null, true);
     } else {
       console.log(`⚠️ CORS blocked origin: ${origin}`);

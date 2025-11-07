@@ -23,7 +23,7 @@ const getApiBaseUrl = (): string => {
     if (hostname.includes('vercel.app') || hostname.includes('v-e-t')) {
       // Set your production backend URL via REACT_APP_API_URL environment variable
       // Or update this line with your actual backend URL
-      return process.env.REACT_APP_API_URL || 'https://your-backend-domain.com/api';
+      return process.env.REACT_APP_API_URL || 'https://v-e-t-1.onrender.com/api';
     }
     
     // Local development
@@ -38,7 +38,7 @@ const getApiBaseUrl = (): string => {
   }
   
   // Final fallback - set via REACT_APP_API_URL environment variable
-  return process.env.REACT_APP_API_URL || 'https://your-backend-domain.com/api';
+  return process.env.REACT_APP_API_URL || 'https://v-e-t-1.onrender.com/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
