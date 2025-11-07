@@ -11,6 +11,8 @@ import HomePage from './src/screens/HomePage';
 import HistoryScreen from './src/screens/HistoryScreen';
 import ProfilePage from './src/screens/ProfilePage';
 import ProfilePageVitals from './src/screens/ProfilePageVitals';
+import HeartRateHistoryScreen from './src/screens/HeartRateHistoryScreen';
+import DogHealthScreen from './src/screens/DogHealthScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -79,6 +81,8 @@ export default function App() {
           <Stack.Screen name="SignUpDog" component={SignUpDogScreen} />
           <Stack.Screen name="ProfilePageVitals" component={ProfilePageVitals} />
           <Stack.Screen name="HistoryScreen" component={HistoryScreen} />
+          <Stack.Screen name="HeartRateHistoryScreen" component={HeartRateHistoryScreen} />
+          <Stack.Screen name="DogHealthScreen" component={DogHealthScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </AppProvider>

@@ -9,6 +9,7 @@ import {
   Image,
 } from 'react-native';
 import {useApp, Dog} from '../context/AppContext';
+import {getHealthStatus, getStatusColor, getStatusBackgroundColor, BreedSize} from '../utils/healthStatus';
 
 const HomePage = ({navigation}: any) => {
   const {owner, dogs} = useApp();
@@ -45,6 +46,18 @@ const HomePage = ({navigation}: any) => {
 
   const navigateToSignUpDog = () => {
     navigation.navigate('SignUpDog');
+  };
+
+  const navigateToHeartRateHistory = () => {
+    if (selectedDog) {
+      navigation.navigate('HeartRateHistoryScreen', {dogId: selectedDog.id});
+    }
+  };
+
+  const navigateToDogHealth = () => {
+    if (selectedDog) {
+      navigation.navigate('DogHealthScreen', {dogId: selectedDog.id});
+    }
   };
 
   return (
@@ -118,21 +131,67 @@ const HomePage = ({navigation}: any) => {
 
             <View style={styles.vitalsContainer}>
               {/* Heart Rate */}
-              <View style={styles.vitalBox}>
-                <Text style={styles.vitalNumber}>{selectedDog.heartRate || 73}</Text>
-                <Text style={styles.vitalLabel}>Beats per minute</Text>
-                <Text style={styles.vitalSubLabel}>Heartbeats</Text>
-              </View>
+              {(() => {
+                const breedSize: BreedSize = 'unknown';
+                const healthStatus = getHealthStatus(selectedDog.heartRate, selectedDog.temperature, breedSize);
+                const heartRateStatus = healthStatus.heartRate;
+                return (
+                  <View style={[
+                    styles.vitalBox,
+                    {backgroundColor: getStatusBackgroundColor(heartRateStatus.status)}
+                  ]}>
+                    <Text style={[
+                      styles.vitalNumber,
+                      {color: getStatusColor(heartRateStatus.status)}
+                    ]}>
+                      {selectedDog.heartRate || 73}
+                    </Text>
+                    <Text style={styles.vitalLabel}>Beats per minute</Text>
+                    <Text style={styles.vitalSubLabel}>Heartbeats</Text>
+                    {heartRateStatus.status !== 'normal' && (
+                      <Text style={[
+                        styles.vitalStatus,
+                        {color: getStatusColor(heartRateStatus.status)}
+                      ]}>
+                        {heartRateStatus.label}
+                      </Text>
+                    )}
+                  </View>
+                );
+              })()}
 
               {/* Divider */}
               <View style={styles.vitalDivider} />
 
               {/* Temperature */}
-              <View style={styles.vitalBox}>
-                <Text style={styles.vitalNumber}>{selectedDog.temperature || 38.4}</Text>
-                <Text style={styles.vitalLabel}>Celsius</Text>
-                <Text style={styles.vitalSubLabel}>Body Temperature</Text>
-              </View>
+              {(() => {
+                const breedSize: BreedSize = 'unknown';
+                const healthStatus = getHealthStatus(selectedDog.heartRate, selectedDog.temperature, breedSize);
+                const temperatureStatus = healthStatus.temperature;
+                return (
+                  <View style={[
+                    styles.vitalBox,
+                    {backgroundColor: getStatusBackgroundColor(temperatureStatus.status)}
+                  ]}>
+                    <Text style={[
+                      styles.vitalNumber,
+                      {color: getStatusColor(temperatureStatus.status)}
+                    ]}>
+                      {selectedDog.temperature || 38.4}
+                    </Text>
+                    <Text style={styles.vitalLabel}>Celsius</Text>
+                    <Text style={styles.vitalSubLabel}>Body Temperature</Text>
+                    {temperatureStatus.status !== 'normal' && (
+                      <Text style={[
+                        styles.vitalStatus,
+                        {color: getStatusColor(temperatureStatus.status)}
+                      ]}>
+                        {temperatureStatus.label}
+                      </Text>
+                    )}
+                  </View>
+                );
+              })()}
             </View>
           </TouchableOpacity>
         )}
@@ -153,7 +212,7 @@ const HomePage = ({navigation}: any) => {
                 <Text style={styles.cardSubText}>View temperature records</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.healthCard}>
+            <TouchableOpacity style={styles.healthCard} onPress={navigateToDogHealth}>
               <View style={styles.cardIconContainer}>
                 <Text style={styles.cardIcon}>💚</Text>
               </View>
@@ -164,7 +223,7 @@ const HomePage = ({navigation}: any) => {
                 <Text style={styles.cardSubText}>Overall health status</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.healthCard}>
+            <TouchableOpacity style={styles.healthCard} onPress={navigateToHeartRateHistory}>
               <View style={styles.cardIconContainer}>
                 <Text style={styles.cardIcon}>💓</Text>
               </View>
@@ -400,6 +459,11 @@ const styles = StyleSheet.create({
   },
   selectedDogProfile: {
     opacity: 1,
+  },
+  vitalStatus: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
   },
   addDogButton: {
     alignItems: 'center',
