@@ -9,6 +9,7 @@ import {
   Image,
   Alert,
 } from 'react-native';
+import {CommonActions} from '@react-navigation/native';
 import {useApp} from '../context/AppContext';
 
 const ProfilePage = ({navigation}: any) => {
@@ -27,36 +28,25 @@ const ProfilePage = ({navigation}: any) => {
           text: 'Log Out',
           style: 'destructive',
           onPress: () => {
+            // Clear auth state first
             logout();
-            navigation.reset({
-              index: 0,
-              routes: [{name: 'Login'}],
-            });
-            Alert.alert('Success', 'You have been logged out successfully');
-          },
-        },
-      ]
-    );
-  };
-
-  const handleSwitchAccount = () => {
-    Alert.alert(
-      'Switch Account',
-      'Are you sure you want to switch accounts? You will be logged out.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Switch',
-          onPress: () => {
-            logout();
-            navigation.reset({
-              index: 0,
-              routes: [{name: 'Login'}],
-            });
-            Alert.alert('Success', 'Switched account successfully');
+            
+            // Reset navigation to Login screen
+            // Since ProfilePage is nested (TabNavigator -> StackNavigator),
+            // we need to reset from the root Stack navigator
+            // Try to get the root navigator by traversing up the navigation tree
+            let rootNavigator = navigation;
+            while (rootNavigator.getParent()) {
+              rootNavigator = rootNavigator.getParent();
+            }
+            
+            // Reset the entire navigation stack to Login
+            rootNavigator.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{name: 'Login'}],
+              })
+            );
           },
         },
       ]
@@ -154,6 +144,7 @@ const ProfilePage = ({navigation}: any) => {
                   <TouchableOpacity 
                     style={styles.dogItem}
                     onPress={() => navigation.navigate('ProfilePageVitals', {dogId: dog.id})}
+                    activeOpacity={0.7}
                   >
                     <View style={styles.dogItemImageContainer}>
                       {dog.imageUri ? (
@@ -171,7 +162,11 @@ const ProfilePage = ({navigation}: any) => {
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={styles.deleteButton}
-                    onPress={() => handleDeleteDog(dog)}
+                    onPress={() => {
+                      console.log('Delete button pressed for:', dog.name);
+                      handleDeleteDog(dog);
+                    }}
+                    activeOpacity={0.5}
                   >
                     <Text style={styles.deleteButtonText}>⋯</Text>
                   </TouchableOpacity>
@@ -187,17 +182,6 @@ const ProfilePage = ({navigation}: any) => {
 
         {/* Action Items */}
         <View style={styles.actionsSection}>
-          <View style={styles.divider} />
-          
-          {/* Switch Account */}
-          <TouchableOpacity style={styles.actionItem} onPress={handleSwitchAccount}>
-            <View style={styles.actionLeft}>
-              <Text style={styles.actionIcon}>⇄</Text>
-              <Text style={styles.actionText}>Switch Account</Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
-
           <View style={styles.divider} />
 
           {/* Log Out */}

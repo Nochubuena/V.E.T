@@ -75,9 +75,21 @@ export default function App() {
     <AppProvider>
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Login" screenOptions={{headerShown: false}}>
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen 
+            name="Login" 
+            component={LoginScreen}
+            options={{
+              gestureEnabled: false, // Prevent swipe back on login screen
+            }}
+          />
           <Stack.Screen name="SignUpOwner" component={SignUpOwnerScreen} />
-          <Stack.Screen name="Main" component={TabNavigator} />
+          <Stack.Screen 
+            name="Main" 
+            component={TabNavigator}
+            options={{
+              gestureEnabled: false, // Prevent swipe back when logged in
+            }}
+          />
           <Stack.Screen name="SignUpDog" component={SignUpDogScreen} />
           <Stack.Screen name="ProfilePageVitals" component={ProfilePageVitals} />
           <Stack.Screen name="HistoryScreen" component={HistoryScreen} />
