@@ -19,43 +19,50 @@ const ProfilePage = ({navigation}: any) => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedDog, setSelectedDog] = useState<any>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
   const handleLogOut = () => {
-    Alert.alert(
-      'Log Out',
-      'Are you sure you want to log out?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Log Out',
-          style: 'destructive',
-          onPress: () => {
-            // Clear auth state first
-            logout();
-            
-            // Reset navigation to Login screen
-            // Since ProfilePage is nested (TabNavigator -> StackNavigator),
-            // we need to reset from the root Stack navigator
-            // Try to get the root navigator by traversing up the navigation tree
-            let rootNavigator = navigation;
-            while (rootNavigator.getParent()) {
-              rootNavigator = rootNavigator.getParent();
-            }
-            
-            // Reset the entire navigation stack to Login
-            rootNavigator.dispatch(
-              CommonActions.reset({
-                index: 0,
-                routes: [{name: 'Login'}],
-              })
-            );
-          },
-        },
-      ]
-    );
+    console.log('Logout button clicked');
+    setLogoutModalVisible(true);
+  };
+
+  const confirmLogout = () => {
+    console.log('Confirm logout called');
+    // Clear auth state first
+    logout();
+    
+    // Close modal
+    setLogoutModalVisible(false);
+    
+    // Use a small delay to ensure state is cleared before navigation
+    setTimeout(() => {
+      // Reset navigation to Login screen
+      // Since ProfilePage is nested (TabNavigator -> StackNavigator),
+      // we need to reset from the root Stack navigator
+      try {
+        let rootNavigator = navigation;
+        let depth = 0;
+        // Traverse up to find root navigator (max 5 levels to prevent infinite loop)
+        while (rootNavigator.getParent() && depth < 5) {
+          rootNavigator = rootNavigator.getParent();
+          depth++;
+        }
+        
+        console.log('Navigating to Login, depth:', depth);
+        
+        // Reset the entire navigation stack to Login
+        rootNavigator.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{name: 'Login'}],
+          })
+        );
+      } catch (error) {
+        console.error('Navigation error:', error);
+        // Fallback: try direct navigation
+        navigation.navigate('Login');
+      }
+    }, 100);
   };
 
   const handleDeleteDog = (dog: any) => {
@@ -204,6 +211,42 @@ const ProfilePage = ({navigation}: any) => {
           <Text>Selected Dog: {selectedDog?.name || 'None'}</Text>
         </View>
       )}
+
+      {/* Logout Confirmation Modal */}
+      <Modal
+        visible={logoutModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setLogoutModalVisible(false)}
+        statusBarTranslucent={true}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setLogoutModalVisible(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Log Out</Text>
+            <Text style={styles.modalMessage}>
+              Are you sure you want to log out?
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setLogoutModalVisible(false)}
+              >
+                <Text style={styles.modalButtonTextCancel}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonDanger]}
+                onPress={confirmLogout}
+              >
+                <Text style={styles.modalButtonTextDanger}>Log Out</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Delete Dog Modal */}
       <Modal
