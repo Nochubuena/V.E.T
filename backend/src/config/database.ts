@@ -9,7 +9,7 @@ const connectDB = async (): Promise<void> => {
     }
 
     const mongoURI = process.env.MONGODB_URI ||
-      'mongodb+srv://username:password@vetapp.leeyqyu.mongodb.net/Data?retryWrites=true&w=majority';
+      'mongodb+srv://Nochubuena:tp5AjLAj0gMN2cMP@vetapp.leeyqyu.mongodb.net/?appName=VetApp';
     
     if (!process.env.MONGODB_URI) {
       console.warn('⚠️ MONGODB_URI not found in environment. Using default Atlas host vetapp.leeyqyu.mongodb.net. Update credentials in backend/.env.');
@@ -25,8 +25,6 @@ const connectDB = async (): Promise<void> => {
       maxPoolSize: 10, // Maintain up to 10 socket connections
       serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
       socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-      bufferCommands: false, // Disable mongoose buffering
-      bufferMaxEntries: 0, // Disable mongoose buffering
     };
 
     await mongoose.connect(mongoURI, options);
