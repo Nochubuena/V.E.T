@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import connectDB from './config/database';
 import authRoutes from './routes/auth';
 import dogsRoutes from './routes/dogs';
@@ -57,20 +58,37 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Connect to MongoDB
-connectDB();
-
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/dogs', dogsRoutes);
 
-// Health check
+// Health check (with DB connection status)
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'V.E.T API is running' });
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  res.json({ 
+    status: 'OK', 
+    message: 'V.E.T API is running',
+    database: dbStatus
+  });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+// Initialize server
+const startServer = async () => {
+  try {
+    // Connect to MongoDB first
+    await connectDB();
+    
+    // Start server after DB connection is established
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`📡 API endpoints available at http://localhost:${PORT}/api`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+// Start the server
+startServer();
 
