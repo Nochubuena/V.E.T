@@ -29,12 +29,14 @@ interface AppContextType {
   isLoggedIn: boolean;
   loading: boolean;
   error: string | null;
+  isPolling: boolean; // NEW: Indicates if polling is active
   setOwner: (owner: Owner | null) => void;
   addDog: (dog: Dog) => Promise<boolean>;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   signUpOwner: (email: string, password: string, name?: string) => Promise<boolean>;
   fetchDogs: () => Promise<void>;
+  refreshDogs: () => Promise<void>; // NEW: Manual refresh function
   deleteDog: (dogId: string) => Promise<boolean>;
   markDogDeceased: (dogId: string) => Promise<boolean>;
 }
@@ -47,6 +49,7 @@ export const AppProvider = ({children}: {children: ReactNode}) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
 
   // Check if user is already logged in (from stored token)
   useEffect(() => {
@@ -74,6 +77,28 @@ export const AppProvider = ({children}: {children: ReactNode}) => {
     }
   }, [isLoggedIn, owner]);
 
+  // Start polling when logged in (auto-refresh every 5 seconds)
+  useEffect(() => {
+    if (!isLoggedIn || !owner) {
+      // Stop polling if logged out
+      setIsPolling(false);
+      return;
+    }
+
+    // Start polling every 5 seconds
+    const interval = setInterval(() => {
+      fetchDogs();
+    }, 5000); // 5000ms = 5 seconds
+
+    setIsPolling(true);
+
+    // Cleanup on unmount or when dependencies change
+    return () => {
+      clearInterval(interval);
+      setIsPolling(false);
+    };
+  }, [isLoggedIn, owner]);
+
   const fetchDogs = async (): Promise<void> => {
     try {
       setLoading(true);
@@ -82,11 +107,26 @@ export const AppProvider = ({children}: {children: ReactNode}) => {
       setDogs(response.data);
     } catch (error: any) {
       console.error('Error fetching dogs:', error);
-      setError(error.response?.data?.error || 'Failed to fetch dogs');
+      
+      // Specific error handling
+      if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error')) {
+        setError('Network error. Please check your connection.');
+      } else if (error.response?.status === 401) {
+        setError('Session expired. Please log in again.');
+        logout(); // Auto-logout on auth error
+      } else {
+        setError(error.response?.data?.error || 'Failed to fetch dogs');
+      }
+      
       setDogs([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Manual refresh function (can be called by user)
+  const refreshDogs = async (): Promise<void> => {
+    await fetchDogs();
   };
 
   const signUpOwner = async (
@@ -252,12 +292,14 @@ export const AppProvider = ({children}: {children: ReactNode}) => {
         isLoggedIn,
         loading,
         error,
+        isPolling,
         setOwner: updateOwner,
         addDog,
         login,
         logout,
         signUpOwner,
         fetchDogs,
+        refreshDogs,
         deleteDog,
         markDogDeceased,
       }}>

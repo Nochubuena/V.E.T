@@ -63,6 +63,24 @@ const DogHealthScreen = ({navigation, route}: any) => {
         {/* Title */}
         <Text style={styles.title}>{dogName}'s Health</Text>
         <Text style={styles.subtitle}>Overall health status</Text>
+        
+        {/* Last Update Time */}
+        {dog?.vitalRecords && dog.vitalRecords.length > 0 && (
+          <View style={styles.updateInfo}>
+            <Text style={styles.updateLabel}>
+              Last updated: {new Date(dog.vitalRecords[dog.vitalRecords.length - 1].time).toLocaleString()}
+            </Text>
+            {(() => {
+              const lastUpdateTime = new Date(dog.vitalRecords[dog.vitalRecords.length - 1].time);
+              const minutesSinceUpdate = Math.floor((Date.now() - lastUpdateTime.getTime()) / 60000);
+              return minutesSinceUpdate > 1 && (
+                <Text style={styles.staleWarning}>
+                  Data is {minutesSinceUpdate} minute{minutesSinceUpdate !== 1 ? 's' : ''} old
+                </Text>
+              );
+            })()}
+          </View>
+        )}
 
         {/* Health Status Overview */}
         <View style={styles.overviewSection}>
@@ -243,7 +261,23 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 18,
     color: '#666666',
-    marginBottom: 24,
+    marginBottom: 8,
+  },
+  updateInfo: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  updateLabel: {
+    fontSize: 13,
+    color: '#666666',
+    marginBottom: 4,
+  },
+  staleWarning: {
+    fontSize: 12,
+    color: '#FF9500',
+    fontWeight: '600',
   },
   overviewSection: {
     marginBottom: 20,

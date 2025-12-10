@@ -12,8 +12,9 @@ import {useApp, Dog} from '../context/AppContext';
 import {getHealthStatus, getStatusColor, getStatusBackgroundColor, BreedSize} from '../utils/healthStatus';
 
 const HomePage = ({navigation}: any) => {
-  const {owner, dogs} = useApp();
+  const {owner, dogs, isPolling, refreshDogs} = useApp();
   const [selectedDog, setSelectedDog] = useState<Dog | null>(null);
+  const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
 
   useEffect(() => {
     if (dogs.length > 0) {
@@ -27,6 +28,8 @@ const HomePage = ({navigation}: any) => {
           setSelectedDog(dogs[0]);
         }
       }
+      // Update last update time when dogs data changes
+      setLastUpdateTime(new Date());
     } else {
       // No dogs available, clear selection
       setSelectedDog(null);
@@ -129,7 +132,29 @@ const HomePage = ({navigation}: any) => {
                   <Text style={styles.vitalDogEmoji}>🐕</Text>
                 )}
               </View>
-              <Text style={styles.vitalTitle}>{selectedDog.name}'s Vital Status</Text>
+              <View style={styles.vitalTitleContainer}>
+                <Text style={styles.vitalTitle}>{selectedDog.name}'s Vital Status</Text>
+                {/* Live Indicator */}
+                {isPolling && (
+                  <View style={styles.liveIndicator}>
+                    <View style={styles.liveDot} />
+                    <Text style={styles.liveText}>Live</Text>
+                    {lastUpdateTime && (
+                      <Text style={styles.lastUpdate}>
+                        {Math.floor((Date.now() - lastUpdateTime.getTime()) / 1000)}s ago
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </View>
+              {/* Manual Refresh Button */}
+              <TouchableOpacity 
+                onPress={refreshDogs} 
+                style={styles.refreshButton}
+                hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+              >
+                <Text style={styles.refreshIcon}>⟳</Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.vitalsContainer}>
@@ -352,11 +377,44 @@ const styles = StyleSheet.create({
   vitalDogEmoji: {
     fontSize: 30,
   },
+  vitalTitleContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
   vitalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#000000',
-    flex: 1,
+  },
+  liveIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4CAF50',
+    marginRight: 6,
+  },
+  liveText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#2E7D32',
+    marginRight: 8,
+  },
+  lastUpdate: {
+    fontSize: 11,
+    color: '#666666',
+  },
+  refreshButton: {
+    padding: 8,
+    marginLeft: 8,
+  },
+  refreshIcon: {
+    fontSize: 20,
+    color: '#000000',
   },
   vitalsContainer: {
     flexDirection: 'row',

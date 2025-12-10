@@ -151,3 +151,32 @@ export const getHealthStatus = (
   };
 };
 
+/**
+ * Calculate vital status string for API
+ * Returns: "normal", "warning", or "critical"
+ * This function is used by the bridge service to determine status before sending to API
+ */
+export function calculateVitalStatusForAPI(
+  heartRate: number | undefined,
+  temperature: number | undefined,
+  breedSize: BreedSize = 'unknown'
+): string {
+  if (heartRate === undefined || temperature === undefined) {
+    return 'normal'; // Default if missing data
+  }
+
+  const healthStatus = getHealthStatus(heartRate, temperature, breedSize);
+  
+  // Determine overall status
+  const hrAbnormal = healthStatus.heartRate.status !== 'normal';
+  const tempAbnormal = healthStatus.temperature.status !== 'normal';
+  
+  if (hrAbnormal && tempAbnormal) {
+    return 'critical'; // Both abnormal = critical
+  } else if (hrAbnormal || tempAbnormal) {
+    return 'warning'; // One abnormal = warning
+  } else {
+    return 'normal'; // Both normal = normal
+  }
+}
+
