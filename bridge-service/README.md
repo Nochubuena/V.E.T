@@ -1,11 +1,11 @@
 # V.E.T Collar Bridge Service
 
-Bridge service that connects Arduino collar hardware to the V.E.T backend API.
+Bridge service that connects ESP32 collar hardware to the V.E.T backend API.
 
 ## Overview
 
-This service runs on a computer/Raspberry Pi that has physical access to the Arduino collar via USB/Serial connection. It:
-- Reads serial data from the Arduino
+This service runs on a computer/Raspberry Pi that has physical access to the ESP32 collar via USB/Serial connection. It:
+- Reads serial data from the ESP32
 - Parses temperature and heart rate data
 - Sends HTTP requests to the backend API
 - Handles errors and reconnections automatically
@@ -13,7 +13,7 @@ This service runs on a computer/Raspberry Pi that has physical access to the Ard
 ## Prerequisites
 
 - Node.js 18+ installed
-- Arduino collar connected via USB
+- ESP32 collar connected via USB
 - Backend API running and accessible
 - Valid JWT token from owner login
 
@@ -32,7 +32,7 @@ cp .env.example .env
 3. Edit `.env` file with your configuration:
 ```env
 SERIAL_PORT=COM3                    # Your serial port (COM3 on Windows, /dev/ttyUSB0 on Linux)
-BAUD_RATE=115200                    # Must match Arduino Serial.begin()
+BAUD_RATE=115200                    # Must match ESP32 Serial.begin(115200)
 API_BASE_URL=http://localhost:3000/api
 DOG_ID=507f1f77bcf86cd799439011      # MongoDB ObjectId of your dog
 AUTH_TOKEN=your_jwt_token_here        # Get this from owner login
@@ -62,7 +62,7 @@ UPDATE_INTERVAL=5000                 # Send updates every 5 seconds
 ### Windows:
 1. Open Device Manager
 2. Look under "Ports (COM & LPT)"
-3. Find your Arduino (usually shows as "Arduino Uno" or similar)
+3. Find your ESP32 (usually shows as "USB-SERIAL CH340" or "CP210x" or similar)
 4. Note the COM port number (e.g., COM3)
 
 ### Linux/Mac:
@@ -85,8 +85,8 @@ npm start
 
 ## How It Works
 
-1. **Serial Connection**: Connects to Arduino via USB/Serial
-2. **Data Reading**: Reads serial output every second (Arduino sends data continuously)
+1. **Serial Connection**: Connects to ESP32 via USB/Serial
+2. **Data Reading**: Reads serial output every second (ESP32 sends data continuously)
 3. **Data Parsing**: Parses strings like "Temperature:38.5C 101.3F\nWaveform:1850 BPM:72"
 4. **Data Validation**: Validates temperature and BPM ranges
 5. **API Request**: Sends HTTP PUT request to `/api/dogs/:dogId/vitals`
@@ -102,7 +102,8 @@ Logs are saved to `logs/` directory:
 ## Troubleshooting
 
 ### "Serial port not found"
-- Check Arduino is connected via USB
+- Check ESP32 is connected via USB
+- Verify USB-to-Serial drivers are installed
 - Verify `SERIAL_PORT` in `.env` matches your port
 - Make sure no other program is using the serial port
 
@@ -121,7 +122,7 @@ Logs are saved to `logs/` directory:
 
 ### Data not updating
 - Check serial port connection
-- Verify Arduino code is sending data in correct format
+- Verify ESP32 code is sending data in correct format (see `arduino/collar/collar.ino`)
 - Check logs for parsing errors
 
 ## Configuration Options

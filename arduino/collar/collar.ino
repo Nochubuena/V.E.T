@@ -1,3 +1,7 @@
+// ESP32 Collar Code for V.E.T System
+// Hardware: ESP32 Dev Module
+// Sensors: DS18B20 Temperature (Pin 4), Pulse Sensor (Pin 33)
+
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
@@ -5,7 +9,7 @@
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 
-#define PULSE_PIN 33
+#define PULSE_PIN 33  // ESP32 GPIO33 (ADC1_CH5)
 
 int Signal;
 int Threshold = 1800;

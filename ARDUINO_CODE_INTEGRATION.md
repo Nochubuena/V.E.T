@@ -163,16 +163,16 @@ void loop() {
 
 ## What's Already Done
 
-### ✅ Arduino Code
-- **Status**: Ready (you have it)
+### ✅ ESP32 Code
+- **Status**: Ready (in `arduino/collar/collar.ino`)
 - **What it does**: Reads sensors, sends serial data
 - **Format**: Matches what bridge service expects
-- **Action needed**: Upload to Arduino when you get hardware
+- **Action needed**: Upload to ESP32 when you get hardware (see `arduino/README.md` for setup)
 
 ### ✅ Bridge Service
 - **Status**: Complete (we built it)
 - **What it does**: Reads serial, parses data, sends to API
-- **Format**: Parses your Arduino's output format perfectly
+- **Format**: Parses your ESP32's output format perfectly
 - **Action needed**: Configure .env and run when hardware is ready
 
 ### ✅ Backend API
@@ -189,15 +189,19 @@ void loop() {
 
 ## When You Get the Hardware
 
-### Step 1: Upload Arduino Code
+### Step 1: Upload ESP32 Code
 
 1. **Open Arduino IDE**
-2. **Copy your code** (the one you showed me)
-3. **Connect Arduino** via USB
-4. **Select board** (Arduino Uno/Nano/etc.)
-5. **Select port** (COM3, COM4, etc.)
-6. **Upload** the code
-7. **Open Serial Monitor** (115200 baud) to verify it's working
+2. **Install ESP32 Board Package** (if not already installed):
+   - File → Preferences → Additional Board Manager URLs
+   - Add: `https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json`
+   - Tools → Board → Boards Manager → Search "ESP32" → Install "esp32 by Espressif Systems"
+3. **Open the code**: File → Open → `arduino/collar/collar.ino`
+4. **Connect ESP32** via USB
+5. **Select board**: Tools → Board → ESP32 Arduino → **ESP32 Dev Module**
+6. **Select port**: Tools → Port → Select COM port (COM3, COM4, etc.)
+7. **Upload** the code (may need to hold BOOT button during upload)
+8. **Open Serial Monitor**: Tools → Serial Monitor (115200 baud) to verify it's working
 
 **Expected Serial Monitor Output:**
 ```
@@ -230,8 +234,8 @@ Waveform:1850 BPM:72
 
 4. **Edit .env file:**
    ```env
-   SERIAL_PORT=COM3              # Use the port from Arduino IDE
-   BAUD_RATE=115200             # Must match Arduino Serial.begin(115200)
+   SERIAL_PORT=COM3              # Use the port from Arduino IDE (ESP32 connection)
+   BAUD_RATE=115200             # Must match ESP32 Serial.begin(115200)
    API_BASE_URL=http://localhost:3000/api
    DOG_ID=507f1f77bcf86cd799439011  # Your dog's MongoDB ID
    AUTH_TOKEN=your_jwt_token_here   # Get from web app login
@@ -319,19 +323,20 @@ const bpmMatch = line.match(/BPM:(\d+)/);
 ## Complete Setup Checklist
 
 ### Before Hardware Arrives:
-- [x] Arduino code ready (you have it)
+- [x] ESP32 code ready (in `arduino/collar/collar.ino`)
 - [x] Bridge service code ready (we built it)
 - [x] Backend API ready (we enhanced it)
 - [x] Frontend ready (we enhanced it)
 
 ### When Hardware Arrives:
-- [ ] Upload Arduino code to Arduino
-- [ ] Connect Arduino to computer via USB
+- [ ] Install ESP32 board package in Arduino IDE
+- [ ] Upload ESP32 code to ESP32 (see `arduino/README.md`)
+- [ ] Connect ESP32 to computer via USB
 - [ ] Verify Serial Monitor shows data
 - [ ] Install bridge service dependencies (`npm install`)
 - [ ] Configure .env file (SERIAL_PORT, DOG_ID, AUTH_TOKEN)
 - [ ] Start bridge service (`npm run dev`)
-- [ ] Verify bridge service connects to Arduino
+- [ ] Verify bridge service connects to ESP32
 - [ ] Verify bridge service sends data to backend
 - [ ] Check web app shows "Live" indicator
 - [ ] Watch vitals update automatically!
@@ -340,23 +345,25 @@ const bpmMatch = line.match(/BPM:(\d+)/);
 
 ## Troubleshooting
 
-### Arduino Code Issues
+### ESP32 Code Issues
 
 **Problem**: Serial Monitor shows no data
-- **Check**: Arduino is powered on
-- **Check**: Sensors are connected correctly
+- **Check**: ESP32 is powered on
+- **Check**: Sensors are connected correctly (GPIO 4 for temp, GPIO 33 for pulse)
 - **Check**: Serial Monitor baud rate is 115200
 - **Check**: Code uploaded successfully
+- **Check**: USB-to-Serial drivers installed (CP2102, CH340, or FTDI)
 
 **Problem**: Data format doesn't match
-- **Check**: Arduino code matches exactly what you showed me
+- **Check**: ESP32 code matches `arduino/collar/collar.ino`
 - **Check**: Serial Monitor shows correct format
 
 ### Bridge Service Issues
 
 **Problem**: "Serial port not found"
-- **Check**: Arduino connected via USB
+- **Check**: ESP32 connected via USB
 - **Check**: SERIAL_PORT in .env matches Arduino IDE port
+- **Check**: USB-to-Serial drivers installed
 - **Check**: No other program using the port (close Arduino IDE Serial Monitor)
 
 **Problem**: "Authentication failed"

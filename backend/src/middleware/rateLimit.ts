@@ -13,7 +13,7 @@ export const collarLimiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   keyGenerator: (req) => {
     // Rate limit per dog ID (allows multiple collars for different dogs)
-    return req.params.id || req.ip;
+    return req.params.id || req.ip || 'unknown';
   },
   skip: (req) => {
     // Skip rate limiting in development if needed
