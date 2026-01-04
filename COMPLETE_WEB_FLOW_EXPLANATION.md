@@ -623,3 +623,4 @@ POLLING FETCHES DOG DATA → UI SHOWS DOG
 
 This is how the complete flow works from sign up to automatic updates!
 
+

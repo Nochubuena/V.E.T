@@ -607,3 +607,4 @@ The architecture is **scalable** because:
 
 This architecture ensures that **data flows continuously** from the physical collar to the cloud database, and the web app can fetch and display this data to the owner from anywhere in the world.
 
+

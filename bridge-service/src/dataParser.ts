@@ -114,3 +114,4 @@ export function validateParsedData(data: ParsedData): boolean {
   return true;
 }
 
+
