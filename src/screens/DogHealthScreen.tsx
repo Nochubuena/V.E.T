@@ -13,6 +13,7 @@ import {
   getStatusColor,
   getStatusBackgroundColor,
   BreedSize,
+  getBreedBaseTemperature,
 } from '../utils/healthStatus';
 
 const DogHealthScreen = ({navigation, route}: any) => {
@@ -28,7 +29,8 @@ const DogHealthScreen = ({navigation, route}: any) => {
   const healthStatus = getHealthStatus(
     dog?.heartRate,
     dog?.temperature,
-    breedSize
+    breedSize,
+    dog?.breed
   );
 
   if (!dog && dogs.length === 0) {

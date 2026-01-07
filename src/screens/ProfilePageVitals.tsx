@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import Svg, {Path, Circle} from 'react-native-svg';
 import {useApp} from '../context/AppContext';
-import {getHealthStatus, getStatusColor, getStatusBackgroundColor, BreedSize} from '../utils/healthStatus';
+import {getHealthStatus, getStatusColor, getStatusBackgroundColor, BreedSize, getBreedBaseTemperature} from '../utils/healthStatus';
 
 const {width} = Dimensions.get('window');
 
@@ -97,6 +97,32 @@ const ProfilePageVitals = ({navigation, route}: any) => {
         {/* Divider */}
         <View style={styles.divider} />
 
+        {/* Dog Information Section */}
+        <View style={styles.infoSection}>
+          <Text style={styles.infoTitle}>Dog Information</Text>
+          <View style={styles.infoContainer}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Breed:</Text>
+              <Text style={styles.infoValue}>{dog?.breed || 'Not specified'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Age:</Text>
+              <Text style={styles.infoValue}>{dog?.age !== undefined ? `${dog.age} years` : 'Not specified'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Gender:</Text>
+              <Text style={styles.infoValue}>{dog?.gender || 'Not specified'}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Weight:</Text>
+              <Text style={styles.infoValue}>{dog?.weight !== undefined ? `${dog.weight} kg` : 'Not specified'}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Divider */}
+        <View style={styles.divider} />
+
         {/* Vital Status Summary */}
         <View style={styles.vitalsSection}>
           <Text style={styles.vitalTitle}>{dogName}'s Vital Status</Text>
@@ -105,7 +131,7 @@ const ProfilePageVitals = ({navigation, route}: any) => {
             {/* Heart Rate */}
             {(() => {
               const breedSize: BreedSize = 'unknown';
-              const healthStatus = getHealthStatus(dog?.heartRate, dog?.temperature, breedSize);
+              const healthStatus = getHealthStatus(dog?.heartRate, dog?.temperature, breedSize, dog?.breed);
               const heartRateStatus = healthStatus.heartRate;
               return (
                 <View style={[
@@ -138,7 +164,8 @@ const ProfilePageVitals = ({navigation, route}: any) => {
             {/* Temperature */}
             {(() => {
               const breedSize: BreedSize = 'unknown';
-              const healthStatus = getHealthStatus(dog?.heartRate, dog?.temperature, breedSize);
+              const baseTemp = dog?.breed ? getBreedBaseTemperature(dog.breed) : 38.5;
+              const healthStatus = getHealthStatus(dog?.heartRate, dog?.temperature, breedSize, dog?.breed);
               const temperatureStatus = healthStatus.temperature;
               return (
                 <View style={[
@@ -149,10 +176,13 @@ const ProfilePageVitals = ({navigation, route}: any) => {
                     styles.vitalNumber,
                     {color: getStatusColor(temperatureStatus.status)}
                   ]}>
-                    {dog?.temperature || 38.4}
+                    {dog?.temperature || baseTemp}
                   </Text>
                   <Text style={styles.vitalLabel}>Celsius</Text>
                   <Text style={styles.vitalSubLabel}>Body Temperature</Text>
+                  {dog?.breed && (
+                    <Text style={styles.vitalSubLabel}>(Base: {baseTemp.toFixed(1)}°C for {dog.breed})</Text>
+                  )}
                   {temperatureStatus.status !== 'normal' && (
                     <Text style={[
                       styles.vitalStatus,
@@ -367,6 +397,38 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#E0E0E0',
     marginVertical: 20,
+  },
+  infoSection: {
+    marginBottom: 20,
+  },
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 16,
+  },
+  infoContainer: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 16,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  infoLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666666',
+  },
+  infoValue: {
+    fontSize: 16,
+    color: '#000000',
+    fontWeight: '500',
   },
   vitalsSection: {
     marginBottom: 20,

@@ -14,16 +14,21 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import {useApp, Dog} from '../context/AppContext';
+import AnimatedButton from '../components/AnimatedButton';
 
 const SignUpDogScreen = ({navigation}: any) => {
   const [dogName, setDogName] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [error, setError] = useState<string>('');
   const [touched, setTouched] = useState(false);
-  const [baseTemperature, setBaseTemperature] = useState<string>('');
-  const [baseHeartbeat, setBaseHeartbeat] = useState<string>('');
-  const [tempError, setTempError] = useState<string>('');
-  const [heartbeatError, setHeartbeatError] = useState<string>('');
+  const [breed, setBreed] = useState<string>('');
+  const [age, setAge] = useState<string>('');
+  const [gender, setGender] = useState<string>('');
+  const [weight, setWeight] = useState<string>('');
+  const [breedError, setBreedError] = useState<string>('');
+  const [ageError, setAgeError] = useState<string>('');
+  const [genderError, setGenderError] = useState<string>('');
+  const [weightError, setWeightError] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [addedDogName, setAddedDogName] = useState<string>('');
@@ -201,30 +206,51 @@ const SignUpDogScreen = ({navigation}: any) => {
     return '';
   };
 
-  const validateTemperature = (temp: string): string => {
-    if (!temp.trim()) {
-      return 'Base temperature is required';
+  const validateBreed = (breed: string): string => {
+    if (!breed.trim()) {
+      return 'Breed is required';
     }
-    const tempValue = parseFloat(temp);
-    if (isNaN(tempValue)) {
-      return 'Temperature must be a valid number';
-    }
-    if (tempValue < 35 || tempValue > 42) {
-      return 'Temperature must be between 35 and 42°C';
+    if (breed.trim().length < 2) {
+      return 'Breed must be at least 2 characters';
     }
     return '';
   };
 
-  const validateHeartbeat = (heartbeat: string): string => {
-    if (!heartbeat.trim()) {
-      return 'Base heartbeat is required';
+  const validateAge = (age: string): string => {
+    if (!age.trim()) {
+      return 'Age is required';
     }
-    const heartbeatValue = parseFloat(heartbeat);
-    if (isNaN(heartbeatValue)) {
-      return 'Heartbeat must be a valid number';
+    const ageValue = parseFloat(age);
+    if (isNaN(ageValue)) {
+      return 'Age must be a valid number';
     }
-    if (heartbeatValue < 40 || heartbeatValue > 200) {
-      return 'Heartbeat must be between 40 and 200 BPM';
+    if (ageValue < 0 || ageValue > 30) {
+      return 'Age must be between 0 and 30 years';
+    }
+    return '';
+  };
+
+  const validateGender = (gender: string): string => {
+    if (!gender.trim()) {
+      return 'Gender is required';
+    }
+    const genderLower = gender.trim().toLowerCase();
+    if (genderLower !== 'male' && genderLower !== 'female' && genderLower !== 'm' && genderLower !== 'f') {
+      return 'Gender must be Male or Female';
+    }
+    return '';
+  };
+
+  const validateWeight = (weight: string): string => {
+    if (!weight.trim()) {
+      return 'Weight is required';
+    }
+    const weightValue = parseFloat(weight);
+    if (isNaN(weightValue)) {
+      return 'Weight must be a valid number';
+    }
+    if (weightValue < 0.5 || weightValue > 200) {
+      return 'Weight must be between 0.5 and 200 kg';
     }
     return '';
   };
@@ -242,16 +268,20 @@ const SignUpDogScreen = ({navigation}: any) => {
 
   const handleSignUp = async () => {
     const nameError = validateDogName(dogName);
-    const tempErrorMsg = validateTemperature(baseTemperature);
-    const heartbeatErrorMsg = validateHeartbeat(baseHeartbeat);
+    const breedErrorMsg = validateBreed(breed);
+    const ageErrorMsg = validateAge(age);
+    const genderErrorMsg = validateGender(gender);
+    const weightErrorMsg = validateWeight(weight);
     
     setTouched(true);
     setError(nameError);
-    setTempError(tempErrorMsg);
-    setHeartbeatError(heartbeatErrorMsg);
+    setBreedError(breedErrorMsg);
+    setAgeError(ageErrorMsg);
+    setGenderError(genderErrorMsg);
+    setWeightError(weightErrorMsg);
 
-    if (nameError || tempErrorMsg || heartbeatErrorMsg) {
-      const errors = [nameError, tempErrorMsg, heartbeatErrorMsg].filter(e => e).join('\n');
+    if (nameError || breedErrorMsg || ageErrorMsg || genderErrorMsg || weightErrorMsg) {
+      const errors = [nameError, breedErrorMsg, ageErrorMsg, genderErrorMsg, weightErrorMsg].filter(e => e).join('\n');
       Alert.alert('Validation Error', errors);
       return;
     }
@@ -262,24 +292,21 @@ const SignUpDogScreen = ({navigation}: any) => {
       return;
     }
 
-    const tempValue = parseFloat(baseTemperature);
-    const heartbeatValue = parseFloat(baseHeartbeat);
+    const ageValue = parseFloat(age);
+    const weightValue = parseFloat(weight);
+    const genderNormalized = gender.trim().toLowerCase() === 'm' || gender.trim().toLowerCase() === 'male' 
+      ? 'Male' 
+      : 'Female';
 
     const newDog: Dog = {
       id: '', // Will be set by backend
       name: dogName.trim(),
       ownerId: owner.id,
       imageUri: imageUri || undefined,
-      heartRate: heartbeatValue,
-      temperature: tempValue,
-      vitalRecords: [
-        {
-          heartRate: heartbeatValue,
-          temperature: tempValue,
-          status: 'Normal',
-          time: new Date().toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true}).toLowerCase(),
-        },
-      ],
+      breed: breed.trim(),
+      age: ageValue,
+      gender: genderNormalized,
+      weight: weightValue,
     };
 
     try {
@@ -292,11 +319,15 @@ const SignUpDogScreen = ({navigation}: any) => {
         // Reset form
         setDogName('');
         setImageUri(null);
-        setBaseTemperature('');
-        setBaseHeartbeat('');
+        setBreed('');
+        setAge('');
+        setGender('');
+        setWeight('');
         setError('');
-        setTempError('');
-        setHeartbeatError('');
+        setBreedError('');
+        setAgeError('');
+        setGenderError('');
+        setWeightError('');
         setTouched(false);
       } else {
         Alert.alert('Error', `A pet named "${dogName.trim()}" already exists. Please choose a different name.`);
@@ -390,70 +421,124 @@ const SignUpDogScreen = ({navigation}: any) => {
           {touched && error ? <Text style={styles.errorText}>{error}</Text> : null}
         </View>
 
-        {/* Base Temperature Input */}
+        {/* Breed Input */}
         <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Base Temperature (°C)</Text>
+          <Text style={styles.inputLabel}>Breed</Text>
           <TextInput
             style={[
               styles.input,
-              tempError && styles.inputError,
+              breedError && styles.inputError,
             ]}
-            placeholder="Enter base temperature (e.g., 38.4)"
+            placeholder="Enter breed (e.g., Golden Retriever)"
             placeholderTextColor="#999999"
-            value={baseTemperature}
+            value={breed}
             onChangeText={(text) => {
-              setBaseTemperature(text);
-              if (tempError) {
-                const errorMsg = validateTemperature(text);
-                setTempError(errorMsg);
+              setBreed(text);
+              if (breedError) {
+                const errorMsg = validateBreed(text);
+                setBreedError(errorMsg);
               }
             }}
             onBlur={() => {
-              const errorMsg = validateTemperature(baseTemperature);
-              setTempError(errorMsg);
+              const errorMsg = validateBreed(breed);
+              setBreedError(errorMsg);
+            }}
+            autoCapitalize="words"
+          />
+          {breedError ? <Text style={styles.errorText}>{breedError}</Text> : null}
+        </View>
+
+        {/* Age Input */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Age (years)</Text>
+          <TextInput
+            style={[
+              styles.input,
+              ageError && styles.inputError,
+            ]}
+            placeholder="Enter age (e.g., 5)"
+            placeholderTextColor="#999999"
+            value={age}
+            onChangeText={(text) => {
+              setAge(text);
+              if (ageError) {
+                const errorMsg = validateAge(text);
+                setAgeError(errorMsg);
+              }
+            }}
+            onBlur={() => {
+              const errorMsg = validateAge(age);
+              setAgeError(errorMsg);
             }}
             keyboardType="decimal-pad"
           />
-          {tempError ? <Text style={styles.errorText}>{tempError}</Text> : null}
+          {ageError ? <Text style={styles.errorText}>{ageError}</Text> : null}
         </View>
 
-        {/* Base Heartbeat Input */}
+        {/* Gender Input */}
         <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Base Heartbeat (BPM)</Text>
+          <Text style={styles.inputLabel}>Gender</Text>
           <TextInput
             style={[
               styles.input,
-              heartbeatError && styles.inputError,
+              genderError && styles.inputError,
             ]}
-            placeholder="Enter base heartbeat (e.g., 73)"
+            placeholder="Enter gender (Male/Female)"
             placeholderTextColor="#999999"
-            value={baseHeartbeat}
+            value={gender}
             onChangeText={(text) => {
-              setBaseHeartbeat(text);
-              if (heartbeatError) {
-                const errorMsg = validateHeartbeat(text);
-                setHeartbeatError(errorMsg);
+              setGender(text);
+              if (genderError) {
+                const errorMsg = validateGender(text);
+                setGenderError(errorMsg);
               }
             }}
             onBlur={() => {
-              const errorMsg = validateHeartbeat(baseHeartbeat);
-              setHeartbeatError(errorMsg);
+              const errorMsg = validateGender(gender);
+              setGenderError(errorMsg);
             }}
-            keyboardType="number-pad"
+            autoCapitalize="words"
           />
-          {heartbeatError ? <Text style={styles.errorText}>{heartbeatError}</Text> : null}
+          {genderError ? <Text style={styles.errorText}>{genderError}</Text> : null}
+        </View>
+
+        {/* Weight Input */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Weight (kg)</Text>
+          <TextInput
+            style={[
+              styles.input,
+              weightError && styles.inputError,
+            ]}
+            placeholder="Enter weight (e.g., 25.5)"
+            placeholderTextColor="#999999"
+            value={weight}
+            onChangeText={(text) => {
+              setWeight(text);
+              if (weightError) {
+                const errorMsg = validateWeight(text);
+                setWeightError(errorMsg);
+              }
+            }}
+            onBlur={() => {
+              const errorMsg = validateWeight(weight);
+              setWeightError(errorMsg);
+            }}
+            keyboardType="decimal-pad"
+          />
+          {weightError ? <Text style={styles.errorText}>{weightError}</Text> : null}
         </View>
 
         {/* Sign Up Button */}
-        <TouchableOpacity 
-          style={[styles.signUpButton, isSubmitting && styles.signUpButtonDisabled]} 
+        <AnimatedButton 
           onPress={handleSignUp}
           disabled={isSubmitting}
+          style={[styles.signUpButton, isSubmitting && styles.signUpButtonDisabled]}
         >
           <Text style={styles.signUpButtonText}>
             {isSubmitting ? 'Registering...' : 'Register Dog'}
           </Text>
-        </TouchableOpacity>
+        </AnimatedButton>
       </ScrollView>
 
       {/* Success Confirmation Modal */}

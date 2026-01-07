@@ -15,7 +15,7 @@ dotenv.config();
 // Configuration from environment variables
 const config = {
   serial: {
-    port: process.env.SERIAL_PORT || 'COM3',
+    port: process.env.SERIAL_PORT || 'auto', // 'auto' for automatic detection
     baudRate: parseInt(process.env.BAUD_RATE || '115200', 10),
     reconnectDelay: parseInt(process.env.SERIAL_RECONNECT_DELAY || '5000', 10),
   },

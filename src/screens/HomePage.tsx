@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,58 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Animated,
 } from 'react-native';
 import {useApp, Dog} from '../context/AppContext';
-import {getHealthStatus, getStatusColor, getStatusBackgroundColor, BreedSize} from '../utils/healthStatus';
+import {getHealthStatus, getStatusColor, getStatusBackgroundColor, BreedSize, getBreedBaseTemperature} from '../utils/healthStatus';
+import AnimatedButton from '../components/AnimatedButton';
+
+// Animated Dog Profile Component
+const AnimatedDogProfile = ({dog, isSelected, onPress}: {dog: Dog; isSelected: boolean; onPress: () => void}) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1.1,
+      useNativeDriver: true,
+      tension: 300,
+      friction: 10,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 300,
+      friction: 10,
+    }).start();
+  };
+
+  return (
+    <Animated.View style={{transform: [{scale: scaleAnim}], marginRight: 20}}>
+      <TouchableOpacity 
+        style={[styles.dogProfile, isSelected && styles.selectedDogProfile]}
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={0.8}
+      >
+        <View style={styles.profileImage}>
+          {dog.imageUri ? (
+            <Image source={{uri: dog.imageUri}} style={styles.dogProfileImage} />
+          ) : (
+            <Text style={styles.dogEmoji}>🐕</Text>
+          )}
+        </View>
+        <Text style={styles.dogName}>{dog.name}</Text>
+        {dog.isDeceased && (
+          <Text style={styles.deceasedLabel}>Deceased</Text>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
 
 const HomePage = ({navigation}: any) => {
   const {owner, dogs, isPolling, refreshDogs} = useApp();
@@ -79,41 +128,30 @@ const HomePage = ({navigation}: any) => {
           {dogs.length === 0 ? (
             <View style={styles.noDogsContainer}>
               <Text style={styles.noDogsText}>You don't have any dogs registered yet.</Text>
-              <TouchableOpacity style={styles.signUpDogButton} onPress={navigateToSignUpDog}>
+              <AnimatedButton onPress={navigateToSignUpDog} style={styles.signUpDogButton}>
                 <Text style={styles.signUpDogButtonText}>Sign up your dog now</Text>
-              </TouchableOpacity>
+              </AnimatedButton>
             </View>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dogList}>
               {dogs.map(dog => (
-                <TouchableOpacity 
-                  key={dog.id} 
-                  style={[styles.dogProfile, selectedDog?.id === dog.id && styles.selectedDogProfile]}
+                <AnimatedDogProfile
+                  key={dog.id}
+                  dog={dog}
+                  isSelected={selectedDog?.id === dog.id}
                   onPress={() => setSelectedDog(dog)}
-                >
-                  <View style={styles.profileImage}>
-                    {dog.imageUri ? (
-                      <Image source={{uri: dog.imageUri}} style={styles.dogProfileImage} />
-                    ) : (
-                      <Text style={styles.dogEmoji}>🐕</Text>
-                    )}
-                  </View>
-                  <Text style={styles.dogName}>{dog.name}</Text>
-                  {dog.isDeceased && (
-                    <Text style={styles.deceasedLabel}>Deceased</Text>
-                  )}
-                </TouchableOpacity>
+                />
               ))}
               {/* Add Dog Button beside dog profiles */}
-              <TouchableOpacity 
-                style={styles.addDogButton}
+              <AnimatedButton
                 onPress={navigateToSignUpDog}
+                style={styles.addDogButton}
               >
                 <View style={styles.addDogButtonIcon}>
                   <Text style={styles.addDogButtonPlus}>+</Text>
                 </View>
                 <Text style={styles.addDogButtonText}>Add Dog</Text>
-              </TouchableOpacity>
+              </AnimatedButton>
             </ScrollView>
           )}
         </View>
@@ -161,7 +199,7 @@ const HomePage = ({navigation}: any) => {
               {/* Heart Rate */}
               {(() => {
                 const breedSize: BreedSize = 'unknown';
-                const healthStatus = getHealthStatus(selectedDog.heartRate, selectedDog.temperature, breedSize);
+                const healthStatus = getHealthStatus(selectedDog.heartRate, selectedDog.temperature, breedSize, selectedDog.breed);
                 const heartRateStatus = healthStatus.heartRate;
                 return (
                   <View style={[
@@ -194,7 +232,8 @@ const HomePage = ({navigation}: any) => {
               {/* Temperature */}
               {(() => {
                 const breedSize: BreedSize = 'unknown';
-                const healthStatus = getHealthStatus(selectedDog.heartRate, selectedDog.temperature, breedSize);
+                const baseTemp = selectedDog.breed ? getBreedBaseTemperature(selectedDog.breed) : 38.5;
+                const healthStatus = getHealthStatus(selectedDog.heartRate, selectedDog.temperature, breedSize, selectedDog.breed);
                 const temperatureStatus = healthStatus.temperature;
                 return (
                   <View style={[
@@ -205,7 +244,7 @@ const HomePage = ({navigation}: any) => {
                       styles.vitalNumber,
                       {color: getStatusColor(temperatureStatus.status)}
                     ]}>
-                      {selectedDog.temperature || 38.4}
+                      {selectedDog.temperature || baseTemp}
                     </Text>
                     <Text style={styles.vitalLabel}>Celsius</Text>
                     <Text style={styles.vitalSubLabel}>Body Temperature</Text>
@@ -231,7 +270,7 @@ const HomePage = ({navigation}: any) => {
         <View style={styles.cardsSection}>
           <Text style={styles.cardsSectionTitle}>Health Information</Text>
           <View style={styles.cardsContainer}>
-            <TouchableOpacity style={styles.healthCard} onPress={navigateTohistory}>
+            <AnimatedButton onPress={navigateTohistory} style={styles.healthCard}>
               <View style={styles.cardIconContainer}>
                 <Text style={styles.cardIcon}>📊</Text>
               </View>
@@ -239,8 +278,8 @@ const HomePage = ({navigation}: any) => {
                 <Text style={styles.cardText}>Temperature History</Text>
                 <Text style={styles.cardSubText}>View temperature records</Text>
               </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.healthCard} onPress={navigateToDogHealth}>
+            </AnimatedButton>
+            <AnimatedButton onPress={navigateToDogHealth} style={styles.healthCard}>
               <View style={styles.cardIconContainer}>
                 <Text style={styles.cardIcon}>💚</Text>
               </View>
@@ -250,8 +289,8 @@ const HomePage = ({navigation}: any) => {
                 </Text>
                 <Text style={styles.cardSubText}>Overall health status</Text>
               </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.healthCard} onPress={navigateToHeartRateHistory}>
+            </AnimatedButton>
+            <AnimatedButton onPress={navigateToHeartRateHistory} style={styles.healthCard}>
               <View style={styles.cardIconContainer}>
                 <Text style={styles.cardIcon}>💓</Text>
               </View>
@@ -259,7 +298,7 @@ const HomePage = ({navigation}: any) => {
                 <Text style={styles.cardText}>Heart Rate History</Text>
                 <Text style={styles.cardSubText}>Monitor heart rate trends</Text>
               </View>
-            </TouchableOpacity>
+            </AnimatedButton>
           </View>
         </View>
       </ScrollView>

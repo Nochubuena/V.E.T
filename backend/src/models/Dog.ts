@@ -12,6 +12,10 @@ export interface IDog extends Document {
   name: string;
   ownerId: mongoose.Types.ObjectId;
   imageUri?: string;
+  breed?: string;
+  age?: number;
+  gender?: string;
+  weight?: number;
   heartRate?: number;
   temperature?: number;
   vitalRecords?: IVitalRecord[];
@@ -41,6 +45,18 @@ const DogSchema: Schema = new Schema(
     },
     imageUri: {
       type: String,
+    },
+    breed: {
+      type: String,
+    },
+    age: {
+      type: Number,
+    },
+    gender: {
+      type: String,
+    },
+    weight: {
+      type: Number,
     },
     heartRate: {
       type: Number,

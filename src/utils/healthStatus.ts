@@ -131,24 +131,88 @@ export const getStatusBackgroundColor = (status: 'normal' | 'low' | 'high'): str
 
 /**
  * Get complete health status for a dog
+ * Now uses breed-specific temperature checking if breed is provided
  */
 export const getHealthStatus = (
   heartRate: number | undefined,
   temperature: number | undefined,
-  breedSize: BreedSize = 'unknown'
+  breedSize: BreedSize = 'unknown',
+  breed?: string
 ): HealthStatus => {
   const heartRateStatus = heartRate !== undefined
     ? checkHeartRateStatus(heartRate, breedSize)
     : { status: 'normal' as HeartRateStatus, label: 'No data' };
   
+  // Use breed-specific temperature checking if breed is provided
   const temperatureStatus = temperature !== undefined
-    ? checkTemperatureStatus(temperature)
+    ? (breed ? checkTemperatureStatusByBreed(temperature, breed) : checkTemperatureStatus(temperature))
     : { status: 'normal' as TemperatureStatus, label: 'No data' };
   
   return {
     heartRate: heartRateStatus,
     temperature: temperatureStatus,
   };
+};
+
+/**
+ * Get base temperature based on dog breed
+ * Different breeds have different normal body temperatures
+ * Returns temperature in Celsius
+ */
+export const getBreedBaseTemperature = (breed?: string): number => {
+  if (!breed) {
+    return 38.5; // Default average temperature
+  }
+
+  const breedLower = breed.toLowerCase();
+  
+  // Large breed dogs typically have slightly lower normal temperatures (38.0-38.5°C)
+  const largeBreeds = [
+    'great dane', 'mastiff', 'saint bernard', 'newfoundland', 'bernese mountain dog',
+    'rottweiler', 'german shepherd', 'labrador', 'golden retriever', 'husky',
+    'alaskan malamute', 'doberman', 'boxer', 'bulldog', 'english bulldog',
+    'french bulldog', 'poodle', 'standard poodle', 'australian shepherd', 'border collie'
+  ];
+  
+  // Small breed dogs typically have slightly higher normal temperatures (38.5-39.0°C)
+  const smallBreeds = [
+    'chihuahua', 'yorkie', 'yorkshire terrier', 'pomeranian', 'shih tzu',
+    'maltese', 'bichon frise', 'pug', 'beagle', 'dachshund', 'miniature poodle',
+    'toy poodle', 'jack russell', 'cocker spaniel', 'boston terrier', 'cavalier',
+    'king charles spaniel', 'papillon', 'pomeranian', 'miniature schnauzer'
+  ];
+  
+  // Check if breed matches any in the lists
+  const isLargeBreed = largeBreeds.some(lb => breedLower.includes(lb));
+  const isSmallBreed = smallBreeds.some(sb => breedLower.includes(sb));
+  
+  if (isLargeBreed) {
+    return 38.2; // Large breeds: 38.0-38.5°C average
+  } else if (isSmallBreed) {
+    return 38.7; // Small breeds: 38.5-39.0°C average
+  } else {
+    // Medium breeds or unknown: 38.5°C average
+    return 38.5;
+  }
+};
+
+/**
+ * Check temperature status based on breed-specific base temperature
+ */
+export const checkTemperatureStatusByBreed = (
+  temperatureCelsius: number,
+  breed?: string
+): { status: TemperatureStatus; label: string } => {
+  const baseTemp = getBreedBaseTemperature(breed);
+  const tolerance = 0.5; // ±0.5°C tolerance
+  
+  if (temperatureCelsius < baseTemp - tolerance) {
+    return { status: 'low', label: 'Hypothermic/Low' };
+  } else if (temperatureCelsius > baseTemp + tolerance) {
+    return { status: 'high', label: 'Hyperthermic/High/Fever' };
+  } else {
+    return { status: 'normal', label: 'Normal' };
+  }
 };
 
 /**

@@ -14,6 +14,10 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
       name: dog.name,
       ownerId: dog.ownerId.toString(),
       imageUri: dog.imageUri,
+      breed: dog.breed,
+      age: dog.age,
+      gender: dog.gender,
+      weight: dog.weight,
       heartRate: dog.heartRate,
       temperature: dog.temperature,
       vitalRecords: dog.vitalRecords || [],
@@ -28,7 +32,7 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
 // Add a new dog
 router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const { name, imageUri, heartRate, temperature } = req.body;
+    const { name, imageUri, breed, age, gender, weight } = req.body;
 
     // Check if dog with same name already exists for this owner
     const existingDog = await Dog.findOne({
@@ -44,8 +48,10 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
       name: name.trim(),
       ownerId: req.userId,
       imageUri,
-      heartRate,
-      temperature,
+      breed,
+      age,
+      gender,
+      weight,
       vitalRecords: [],
     });
 
@@ -56,6 +62,10 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
       name: dog.name,
       ownerId: dog.ownerId.toString(),
       imageUri: dog.imageUri,
+      breed: dog.breed,
+      age: dog.age,
+      gender: dog.gender,
+      weight: dog.weight,
       heartRate: dog.heartRate,
       temperature: dog.temperature,
       vitalRecords: dog.vitalRecords || [],
@@ -176,6 +186,10 @@ router.put('/:id/vitals', authenticate, collarLimiter, async (req: AuthRequest, 
       name: dog.name,
       ownerId: dog.ownerId.toString(),
       imageUri: dog.imageUri,
+      breed: dog.breed,
+      age: dog.age,
+      gender: dog.gender,
+      weight: dog.weight,
       heartRate: dog.heartRate,
       temperature: dog.temperature,
       vitalRecords: dog.vitalRecords || [],

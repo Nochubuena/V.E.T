@@ -6,6 +6,10 @@ export interface Dog {
   name: string;
   ownerId: string;
   imageUri?: string;
+  breed?: string;
+  age?: number;
+  gender?: string;
+  weight?: number;
   heartRate?: number;
   temperature?: number;
   isDeceased?: boolean;
@@ -77,7 +81,7 @@ export const AppProvider = ({children}: {children: ReactNode}) => {
     }
   }, [isLoggedIn, owner]);
 
-  // Start polling when logged in (auto-refresh every 5 seconds)
+  // Start polling when logged in (auto-refresh every 1 minute)
   useEffect(() => {
     if (!isLoggedIn || !owner) {
       // Stop polling if logged out
@@ -85,10 +89,10 @@ export const AppProvider = ({children}: {children: ReactNode}) => {
       return;
     }
 
-    // Start polling every 5 seconds
+    // Start polling every 1 minute
     const interval = setInterval(() => {
       fetchDogs();
-    }, 5000); // 5000ms = 5 seconds
+    }, 60000); // 60000ms = 1 minute
 
     setIsPolling(true);
 
@@ -210,8 +214,10 @@ export const AppProvider = ({children}: {children: ReactNode}) => {
       const dogData = {
         name: dog.name,
         imageUri: dog.imageUri,
-        heartRate: dog.heartRate,
-        temperature: dog.temperature,
+        breed: dog.breed,
+        age: dog.age,
+        gender: dog.gender,
+        weight: dog.weight,
       };
       
       const response = await api.post('/dogs', dogData);
