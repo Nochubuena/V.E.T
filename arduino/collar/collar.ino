@@ -1,25 +1,39 @@
-// ESP32 Collar Code for V.E.T System - Hybrid WiFi/USB Serial
+// ESP32 Collar Code for V.E.T System - Hybrid WiFi/USB Serial + Blynk Integration
 // Hardware: ESP32 Dev Module
 // Sensors: DS18B20 Temperature (Pin 4), Pulse Sensor (Pin 33)
 // Connection: WiFi (primary) or USB Serial (fallback)
+// Platforms: V.E.T Backend API + Blynk Cloud (dual integration)
 
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <BlynkSimpleEsp32.h>
 
 // ========== CONFIGURATION ==========
 // WiFi Credentials (change these to your WiFi)
 const char* ssid = "YOUR_WIFI_NAME";           // Change this
 const char* password = "YOUR_WIFI_PASSWORD";   // Change this
 
-// Backend API Configuration
+// Blynk Configuration
+#define BLYNK_TEMPLATE_ID "TMPL64ATz1cMw"      // Your Blynk Template ID (optional)
+#define BLYNK_TEMPLATE_NAME "VET_Collar"       // Your Blynk Template Name (optional)
+#define BLYNK_AUTH_TOKEN "YOUR_BLYNK_TOKEN"    // Change to your Blynk auth token
+
+// Backend API Configuration (V.E.T System)
 const char* apiBaseURL = "http://localhost:3000/api";  // Change to your backend URL
 const char* dogId = "YOUR_DOG_ID";                    // Change to your dog's MongoDB ID
 const char* authToken = "YOUR_AUTH_TOKEN";             // Change to your JWT token
 
 // Update interval (milliseconds)
 const unsigned long UPDATE_INTERVAL = 5000;  // Send data every 5 seconds
+
+// Blynk Virtual Pins (you can change these if needed)
+#define VIRTUAL_PIN_TEMP V1      // Temperature in Celsius
+#define VIRTUAL_PIN_TEMPF V2     // Temperature in Fahrenheit
+#define VIRTUAL_PIN_HEARTRATE V3 // Heart Rate (BPM)
+#define VIRTUAL_PIN_STATUS V4    // Status indicator
+#define VIRTUAL_PIN_WAVEFORM V5  // Raw waveform signal
 
 // ========== HARDWARE PINS ==========
 #define ONE_WIRE_BUS 4
@@ -39,6 +53,8 @@ bool wifiConnected = false;
 unsigned long lastWiFiAttempt = 0;
 const unsigned long WIFI_RETRY_INTERVAL = 30000;  // Retry WiFi every 30 seconds
 unsigned long lastApiUpdate = 0;
+bool blynkConnected = false;
+unsigned long lastBlynkUpdate = 0;
 
 // ========== SETUP ==========
 void setup() {
@@ -54,6 +70,11 @@ void setup() {
   
   // Try to connect to WiFi
   connectToWiFi();
+  
+  // Initialize Blynk if WiFi is connected
+  if (wifiConnected) {
+    initializeBlynk();
+  }
 }
 
 // ========== MAIN LOOP ==========
@@ -108,13 +129,26 @@ void loop() {
   // Send data via WiFi if connected
   if (wifiConnected && WiFi.status() == WL_CONNECTED) {
     unsigned long now = millis();
+    
+    // Run Blynk (must be called regularly)
+    Blynk.run();
+    blynkConnected = Blynk.connected();
+    
+    // Send data to V.E.T API
     if (now - lastApiUpdate > UPDATE_INTERVAL && BPM > 0) {
       sendDataToAPI(tempC, BPM);
       lastApiUpdate = now;
     }
+    
+    // Send data to Blynk
+    if (blynkConnected && now - lastBlynkUpdate > UPDATE_INTERVAL) {
+      sendDataToBlynk(tempC, tempF, BPM, Signal);
+      lastBlynkUpdate = now;
+    }
   } else {
     // WiFi disconnected, fallback to Serial only
     wifiConnected = false;
+    blynkConnected = false;
   }
 
   delay(1000);
@@ -141,7 +175,10 @@ void connectToWiFi() {
     Serial.println("WiFi Connected!");
     Serial.print("IP Address: ");
     Serial.println(WiFi.localIP());
-    Serial.println("Mode: WiFi (sending data to API)");
+    Serial.println("Mode: WiFi (sending data to V.E.T API + Blynk)");
+    
+    // Initialize Blynk after WiFi connection
+    initializeBlynk();
   } else {
     wifiConnected = false;
     Serial.println();
@@ -149,6 +186,80 @@ void connectToWiFi() {
     Serial.println("Mode: USB Serial only (fallback)");
     Serial.println("Data will be sent via Serial port for bridge service");
   }
+}
+
+// ========== BLYNK INITIALIZATION ==========
+void initializeBlynk() {
+  // Check if Blynk token is configured
+  if (strcmp(BLYNK_AUTH_TOKEN, "YOUR_BLYNK_TOKEN") == 0) {
+    Serial.println("Blynk: Auth token not configured, skipping Blynk initialization");
+    return;
+  }
+  
+  Serial.print("Initializing Blynk... ");
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, password);
+  
+  // Wait a bit for Blynk connection
+  delay(2000);
+  
+  if (Blynk.connected()) {
+    blynkConnected = true;
+    Serial.println("Blynk Connected!");
+    Blynk.virtualWrite(VIRTUAL_PIN_STATUS, 1); // Send connection status
+  } else {
+    blynkConnected = false;
+    Serial.println("Blynk Connection Failed (will retry)");
+  }
+}
+
+// ========== SEND DATA TO BLYNK ==========
+void sendDataToBlynk(float tempC, float tempF, int heartRate, int waveform) {
+  if (!blynkConnected || !Blynk.connected()) {
+    // Try to reconnect if disconnected
+    if (wifiConnected && WiFi.status() == WL_CONNECTED) {
+      initializeBlynk();
+    }
+    return;
+  }
+  
+  // Send temperature in Celsius
+  Blynk.virtualWrite(VIRTUAL_PIN_TEMP, tempC);
+  
+  // Send temperature in Fahrenheit
+  Blynk.virtualWrite(VIRTUAL_PIN_TEMPF, tempF);
+  
+  // Send heart rate (BPM)
+  if (heartRate > 0) {
+    Blynk.virtualWrite(VIRTUAL_PIN_HEARTRATE, heartRate);
+  }
+  
+  // Send raw waveform signal
+  Blynk.virtualWrite(VIRTUAL_PIN_WAVEFORM, waveform);
+  
+  // Update status (1 = OK, 0 = Error)
+  Blynk.virtualWrite(VIRTUAL_PIN_STATUS, 1);
+  
+  Serial.println("Data sent to Blynk successfully!");
+}
+
+// ========== BLYNK EVENT HANDLERS ==========
+// Optional: Handle button/widget events from Blynk app
+BLYNK_WRITE(V0) {
+  // Example: If you add a button widget on V0
+  int pinValue = param.asInt();
+  Serial.print("Blynk Button V0: ");
+  Serial.println(pinValue);
+}
+
+// Blynk connection status handler
+BLYNK_CONNECTED() {
+  Serial.println("Blynk: Device connected to server");
+  blynkConnected = true;
+}
+
+BLYNK_DISCONNECTED() {
+  Serial.println("Blynk: Device disconnected from server");
+  blynkConnected = false;
 }
 
 // ========== SEND DATA TO API ==========

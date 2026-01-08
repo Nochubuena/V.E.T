@@ -638,3 +638,4 @@ const fetchDogs = async () => {
 
 This architecture ensures reliable data flow from the physical collar to the cloud database, and the website can fetch and display this data to the owner from anywhere in the world.
 
+

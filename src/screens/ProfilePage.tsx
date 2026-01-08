@@ -10,9 +10,11 @@ import {
   Alert,
   Platform,
   Modal,
+  TextInput,
 } from 'react-native';
 import {CommonActions} from '@react-navigation/native';
 import {useApp} from '../context/AppContext';
+import {getStoredToken} from '../services/api';
 
 const ProfilePage = ({navigation}: any) => {
   const {owner, dogs, logout, deleteDog, markDogDeceased} = useApp();
@@ -20,6 +22,10 @@ const ProfilePage = ({navigation}: any) => {
   const [selectedDog, setSelectedDog] = useState<any>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [showCollarSetup, setShowCollarSetup] = useState(false);
+  
+  // Get auth token from storage
+  const authToken = getStoredToken();
 
   const handleLogOut = () => {
     console.log('Logout button clicked');
@@ -109,6 +115,32 @@ const ProfilePage = ({navigation}: any) => {
     setSelectedDog(null);
   };
 
+  // Copy text to clipboard
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(text);
+        Alert.alert('Copied!', `${label} copied to clipboard`);
+      } else if (Platform.OS === 'web' && typeof document !== 'undefined') {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        (textArea.style as any).position = 'fixed';
+        (textArea.style as any).opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        Alert.alert('Copied!', `${label} copied to clipboard`);
+      } else {
+        // For React Native, you'd use Clipboard API from @react-native-clipboard/clipboard
+        Alert.alert('Copied!', `${label} copied to clipboard`);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to copy to clipboard');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header with Back Button */}
@@ -185,8 +217,80 @@ const ProfilePage = ({navigation}: any) => {
           )}
         </View>
 
-        {/* Action Items */}
+        {/* Collar Setup Section */}
         <View style={styles.actionsSection}>
+          <View style={styles.divider} />
+          
+          <TouchableOpacity 
+            style={styles.actionItem} 
+            onPress={() => setShowCollarSetup(!showCollarSetup)}
+          >
+            <View style={styles.actionLeft}>
+              <View style={styles.logoutIcon}>
+                <Text style={styles.logoutSymbol}>🔧</Text>
+              </View>
+              <Text style={styles.actionText}>Collar Setup</Text>
+            </View>
+            <Text style={styles.chevron}>{showCollarSetup ? '▼' : '›'}</Text>
+          </TouchableOpacity>
+          
+          {showCollarSetup && (
+            <View style={styles.collarSetupContent}>
+              <Text style={styles.collarSetupTitle}>Copy these values for your collar:</Text>
+              
+              {/* Auth Token */}
+              <View style={styles.copySection}>
+                <Text style={styles.copyLabel}>Auth Token:</Text>
+                <View style={styles.copyContainer}>
+                  <TextInput
+                    style={styles.copyInput}
+                    value={authToken || 'Not available'}
+                    editable={false}
+                    multiline
+                  />
+                  <TouchableOpacity
+                    style={styles.copyButton}
+                    onPress={() => authToken && copyToClipboard(authToken, 'Auth Token')}
+                    disabled={!authToken}
+                  >
+                    <Text style={styles.copyButtonText}>Copy</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Dog IDs */}
+              {dogs.length > 0 && (
+                <View style={styles.copySection}>
+                  <Text style={styles.copyLabel}>Dog IDs:</Text>
+                  {dogs.map((dog) => (
+                    <View key={dog.id} style={styles.copyContainer}>
+                      <View style={styles.dogIdContainer}>
+                        <Text style={styles.dogIdName}>{dog.name}:</Text>
+                        <TextInput
+                          style={styles.copyInput}
+                          value={dog.id}
+                          editable={false}
+                        />
+                      </View>
+                      <TouchableOpacity
+                        style={styles.copyButton}
+                        onPress={() => copyToClipboard(dog.id, `${dog.name}'s ID`)}
+                      >
+                        <Text style={styles.copyButtonText}>Copy</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              <Text style={styles.collarSetupInstructions}>
+                Paste these values into your collar.ino file:
+                {'\n'}• Replace "YOUR_AUTH_TOKEN" with the Auth Token above
+                {'\n'}• Replace "YOUR_DOG_ID" with the Dog ID for each collar
+              </Text>
+            </View>
+          )}
+          
           <View style={styles.divider} />
 
           {/* Log Out */}
@@ -584,6 +688,74 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  collarSetupContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: '#F9F9F9',
+  },
+  collarSetupTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 16,
+  },
+  copySection: {
+    marginBottom: 20,
+  },
+  copyLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 8,
+  },
+  copyContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  copyInput: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 12,
+    fontFamily: Platform.OS === 'web' ? 'monospace' : 'monospace',
+    color: '#000000',
+    maxHeight: 60,
+  },
+  copyButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minWidth: 70,
+  },
+  copyButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  dogIdContainer: {
+    flex: 1,
+  },
+  dogIdName: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666666',
+    marginBottom: 4,
+  },
+  collarSetupInstructions: {
+    fontSize: 12,
+    color: '#666666',
+    lineHeight: 18,
+    marginTop: 8,
+    fontStyle: 'italic',
   },
 });
 

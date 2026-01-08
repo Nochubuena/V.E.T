@@ -53,10 +53,11 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 15000, // 15 second timeout to prevent hanging requests
 });
 
 // Helper function to get token from storage
-const getStoredToken = (): string | null => {
+export const getStoredToken = (): string | null => {
   // Use AsyncStorage in React Native or localStorage in web
   if (typeof window !== 'undefined' && window.localStorage) {
     return localStorage.getItem('authToken');
@@ -87,15 +88,31 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle authentication errors
+// Handle authentication errors and network issues
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Handle network errors (no response from server)
+    if (!error.response) {
+      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        console.error('⏱️ Request timeout - API took too long to respond');
+        error.message = 'Request timed out. Please check your connection and try again.';
+      } else if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
+        console.error('🌐 Network error - Unable to reach the API');
+        error.message = 'Network error. Please check your connection and ensure the API is accessible.';
+      } else {
+        console.error('❌ Request error:', error.message);
+        error.message = 'Unable to connect to the server. Please try again later.';
+      }
+    }
+    
+    // Handle HTTP status errors
     if (error.response?.status === 401) {
       // Token expired or invalid
       removeToken();
-      // You might want to redirect to login here
+      console.error('🔒 Authentication failed - Token invalid or expired');
     }
+    
     return Promise.reject(error);
   }
 );

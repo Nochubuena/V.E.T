@@ -17,7 +17,7 @@ const LoginScreen = ({navigation}: any) => {
   const [errors, setErrors] = useState<{email?: string; password?: string}>({});
   const [touched, setTouched] = useState<{email?: boolean; password?: boolean}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const {login} = useApp();
+  const {login, error: contextError} = useApp();
 
   const validateEmail = (email: string): string | undefined => {
     if (!email) {
@@ -91,12 +91,16 @@ const LoginScreen = ({navigation}: any) => {
 
     try {
       setIsSubmitting(true);
+      // Clear previous errors
+      setErrors({});
       const success = await login(email, password);
       if (success) {
         navigation.replace('Main');
       } else {
-        setErrors({...errors, password: 'Invalid email or password'});
-        Alert.alert('Login Error', 'Invalid email or password');
+        // Use the error message from context (includes timeout/network errors)
+        const errorMessage = contextError || 'Invalid email or password';
+        setErrors({...errors, password: errorMessage});
+        Alert.alert('Login Error', errorMessage);
       }
     } finally {
       setIsSubmitting(false);

@@ -185,7 +185,9 @@ export const AppProvider = ({children}: {children: ReactNode}) => {
       return true;
     } catch (error: any) {
       console.error('Login error:', error);
-      setError(error.response?.data?.error || 'Login failed');
+      // Handle network errors (timeout, connection issues) and API errors
+      const errorMessage = error.response?.data?.error || error.message || 'Login failed. Please try again.';
+      setError(errorMessage);
       return false;
     } finally {
       setLoading(false);

@@ -229,3 +229,4 @@ Each collar needs:
 
 The hybrid approach gives you the flexibility to use WiFi when available, but still works with Serial if needed!
 
+

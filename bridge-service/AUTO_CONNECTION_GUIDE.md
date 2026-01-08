@@ -200,3 +200,4 @@ npm start
 
 The auto-connection feature makes the collar system much easier to set up and use, especially for non-technical users!
 
+
